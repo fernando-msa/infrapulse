@@ -5,7 +5,7 @@ Plataforma web para monitoramento de SLA, produtividade e risco operacional de e
 ## Stack
 
 | Camada | Tecnologia |
-|--------|------------|
+| ------ | ---------- |
 | Frontend | Next.js 14 + TypeScript |
 | Estilo | Tailwind CSS + shadcn/ui |
 | Backend | NestJS |
@@ -18,7 +18,7 @@ Plataforma web para monitoramento de SLA, produtividade e risco operacional de e
 
 ## Estrutura do Monorepo
 
-```
+```text
 infrapulse/
 ├── frontend/        # Next.js app
 ├── backend/         # NestJS app
@@ -47,9 +47,9 @@ cd infrapulse
 docker-compose up --build
 ```
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- PostgreSQL: localhost:5432
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:3001>
+- PostgreSQL: `localhost:5432`
 
 ---
 
@@ -81,17 +81,18 @@ npm run dev
 ## Usuários do Seed
 
 | Email | Senha | Perfil |
-|-------|-------|--------|
-| admin@infrapulse.com | admin123 | Admin |
-| gestor@infrapulse.com | gestor123 | Gestor |
-| analista@infrapulse.com | analista123 | Analista |
+| ----- | ----- | ------ |
+| `admin@infrapulse.com` | admin123 | Admin |
+| `gestor@infrapulse.com` | gestor123 | Gestor |
+| `analista@infrapulse.com` | analista123 | Analista |
 
 ---
 
 ## Variáveis de Ambiente
 
 ### Backend (`backend/.env.example`)
-```
+
+```env
 DATABASE_URL=postgresql://infrapulse:infrapulse@localhost:5432/infrapulse
 JWT_SECRET=sua_chave_jwt_super_secreta
 JWT_EXPIRES_IN=7d
@@ -99,7 +100,8 @@ PORT=3001
 ```
 
 ### Frontend (`frontend/.env.example`)
-```
+
+```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
