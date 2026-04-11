@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: infrapulse-db
+    environment:
+      POSTGRES_USER: infrapulse
+      POSTGRES_PASSWORD: infrapulse
+      POSTGRES_DB: infrapulse
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - infrapulse-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: infrapulse-api
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://infrapulse:infrapulse@postgres:5432/infrapulse
+      JWT_SECRET: infrapulse_jwt_secret_change_in_production
+      JWT_EXPIRES_IN: 7d
+      PORT: 3001
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - infrapulse-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: infrapulse-web
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - infrapulse-network
+
+volumes:
+  postgres_data:
+
+networks:
+  infrapulse-network:
+    driver: bridge

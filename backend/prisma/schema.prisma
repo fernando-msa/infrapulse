@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  GESTOR
+  ANALISTA
+}
+
+enum TicketStatus {
+  ABERTO
+  EM_ANDAMENTO
+  PENDENTE
+  CONCLUIDO
+  CANCELADO
+}
+
+enum TicketPriority {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum SlaStatus {
+  OK
+  EM_RISCO
+  VIOLADO
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?  @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  tickets   Ticket[]
+  slaRules  SlaRule[]
+
+  @@map("companies")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(ANALISTA)
+  active    Boolean  @default(true)
+  companyId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company         Company?        @relation(fields: [companyId], references: [id])
+  assignedTickets Ticket[]        @relation("AssignedTechnician")
+  createdTickets  Ticket[]        @relation("CreatedBy")
+  importBatches   ImportBatch[]
+
+  @@map("users")
+}
+
+model SlaRule {
+  id            String         @id @default(uuid())
+  name          String
+  priority      TicketPriority
+  responseTime  Int            // minutos para primeira resposta
+  resolutionTime Int           // minutos para resolução
+  companyId     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id])
+  tickets Ticket[]
+
+  @@map("sla_rules")
+}
+
+model Ticket {
+  id               String         @id @default(uuid())
+  externalId       String?        // ID original do sistema importado
+  title            String
+  description      String?
+  status           TicketStatus   @default(ABERTO)
+  priority         TicketPriority @default(MEDIA)
+  category         String?
+  sector           String?
+  companyId        String?
+  assignedToId     String?
+  createdById      String?
+  slaRuleId        String?
+  slaStatus        SlaStatus      @default(OK)
+  openedAt         DateTime       @default(now())
+  firstResponseAt  DateTime?
+  resolvedAt       DateTime?
+  slaDeadline      DateTime?
+  slaResponseDeadline DateTime?
+  importBatchId    String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  company      Company?      @relation(fields: [companyId], references: [id])
+  assignedTo   User?         @relation("AssignedTechnician", fields: [assignedToId], references: [id])
+  createdBy    User?         @relation("CreatedBy", fields: [createdById], references: [id])
+  slaRule      SlaRule?      @relation(fields: [slaRuleId], references: [id])
+  importBatch  ImportBatch?  @relation(fields: [importBatchId], references: [id])
+
+  @@map("tickets")
+}
+
+model ImportBatch {
+  id          String   @id @default(uuid())
+  filename    String
+  totalRows   Int      @default(0)
+  importedRows Int     @default(0)
+  errorRows   Int      @default(0)
+  status      String   @default("PROCESSANDO") // PROCESSANDO, CONCLUIDO, ERRO
+  mapping     Json?    // mapeamento de colunas
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User?    @relation(fields: [userId], references: [id])
+  tickets Ticket[]
+
+  @@map("import_batches")
+}
