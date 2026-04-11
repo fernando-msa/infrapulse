@@ -89,7 +89,7 @@ export class TicketsService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket || !ticket.slaDeadline) return;
 
-    if ([TicketStatus.CONCLUIDO, TicketStatus.CANCELADO].includes(ticket.status)) {
+    if (ticket.status === TicketStatus.CONCLUIDO || ticket.status === TicketStatus.CANCELADO) {
       if (ticket.resolvedAt && ticket.slaDeadline > ticket.resolvedAt) {
         await this.prisma.ticket.update({
           where: { id: ticketId },
