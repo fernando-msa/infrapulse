@@ -14,6 +14,9 @@ out/
 # Build
 dist/
 build/
+coverage/
+backend/coverage/
+frontend/coverage/
 
 # Logs
 *.log

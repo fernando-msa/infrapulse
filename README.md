@@ -1,5 +1,7 @@
 # InfraPulse
 
+[![CI](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml)
+
 Plataforma web para monitoramento de SLA, produtividade e risco operacional de equipes de TI — com foco em centrais de suporte, help desk e service desk.
 
 ## Stack
@@ -118,6 +120,31 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 - ✅ Relatórios com exportação CSV
 - ✅ Layout responsivo e moderno
 - ✅ Estrutura pronta para multiempresa
+
+---
+
+## Testes e Cobertura
+
+### Backend
+
+```bash
+cd backend
+npm.cmd install
+npm.cmd test -- --runInBand
+npm.cmd run test:cov
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm.cmd install
+npm.cmd run test:run
+npm.cmd run test:coverage
+```
+
+- Relatório de cobertura backend: `backend/coverage/`
+- Relatório de cobertura frontend: `frontend/coverage/`
 
 ---
 
