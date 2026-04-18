@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Tela de assinatura e planos">
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <text x="80" y="78" font-family="Segoe UI, Arial" font-size="40" fill="#0f172a" font-weight="700">Assinatura e Planos</text>
+  <text x="80" y="115" font-family="Segoe UI, Arial" font-size="20" fill="#64748b">Acompanhamento de consumo e upgrade de plano por empresa</text>
+
+  <rect x="80" y="150" width="1120" height="110" rx="16" fill="#ffffff"/>
+  <text x="110" y="194" font-family="Segoe UI, Arial" font-size="24" fill="#111827" font-weight="700">Plano atual: TRIAL</text>
+  <text x="110" y="228" font-family="Segoe UI, Arial" font-size="18" fill="#475569">Usuarios: 3/5   |   Chamados no mes: 124/200   |   Expira em: 12 dias</text>
+
+  <rect x="80" y="290" width="350" height="320" rx="14" fill="#ffffff"/>
+  <rect x="465" y="290" width="350" height="320" rx="14" fill="#ffffff"/>
+  <rect x="850" y="290" width="350" height="320" rx="14" fill="#0f172a"/>
+
+  <text x="110" y="338" font-family="Segoe UI, Arial" font-size="28" fill="#111827" font-weight="700">STARTER</text>
+  <text x="110" y="380" font-family="Segoe UI, Arial" font-size="18" fill="#475569">15 usuarios</text>
+  <text x="110" y="410" font-family="Segoe UI, Arial" font-size="18" fill="#475569">2.000 chamados/mes</text>
+  <rect x="110" y="540" width="290" height="50" rx="10" fill="#e2e8f0"/>
+  <text x="190" y="572" font-family="Segoe UI, Arial" font-size="20" fill="#334155" font-weight="700">Selecionar</text>
+
+  <text x="495" y="338" font-family="Segoe UI, Arial" font-size="28" fill="#111827" font-weight="700">GROWTH</text>
+  <text x="495" y="380" font-family="Segoe UI, Arial" font-size="18" fill="#475569">50 usuarios</text>
+  <text x="495" y="410" font-family="Segoe UI, Arial" font-size="18" fill="#475569">10.000 chamados/mes</text>
+  <rect x="495" y="540" width="290" height="50" rx="10" fill="#dbeafe"/>
+  <text x="570" y="572" font-family="Segoe UI, Arial" font-size="20" fill="#1d4ed8" font-weight="700">Upgrade</text>
+
+  <text x="880" y="338" font-family="Segoe UI, Arial" font-size="28" fill="#ffffff" font-weight="700">ENTERPRISE</text>
+  <text x="880" y="380" font-family="Segoe UI, Arial" font-size="18" fill="#cbd5e1">500 usuarios</text>
+  <text x="880" y="410" font-family="Segoe UI, Arial" font-size="18" fill="#cbd5e1">100.000 chamados/mes</text>
+  <rect x="880" y="540" width="290" height="50" rx="10" fill="#14b8a6"/>
+  <text x="955" y="572" font-family="Segoe UI, Arial" font-size="20" fill="#042f2e" font-weight="700">Falar com vendas</text>
+</svg>
