@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Zap, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +117,12 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-center mt-4 text-muted-foreground">
+                Nova empresa?{' '}
+                <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+                  Criar conta SaaS
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Ticket, Upload, BarChart3, Bell,
-  Users, LogOut, Zap, ChevronRight,
+  Users, LogOut, Zap, ChevronRight, CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { clearSession, getUser } from '@/lib/auth';
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { href: '/alertas', label: 'Alertas', icon: Bell },
   { href: '/usuarios', label: 'Usuários', icon: Users, adminOnly: true },
+  { href: '/assinatura', label: 'Assinatura', icon: CreditCard, adminOnly: true },
 ];
 
 export function Sidebar() {

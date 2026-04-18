@@ -32,6 +32,13 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+  signupCompany: (data: {
+    companyName: string;
+    cnpj?: string;
+    adminName: string;
+    adminEmail: string;
+    adminPassword: string;
+  }) => api.post('/auth/signup-company', data),
 };
 
 export const dashboardApi = {
@@ -77,4 +84,10 @@ export const usersApi = {
   list: () => api.get('/users'),
   technicians: () => api.get('/users/technicians'),
   create: (data: any) => api.post('/users', data),
+};
+
+export const companiesApi = {
+  current: () => api.get('/companies/current'),
+  updatePlan: (data: { plan: 'TRIAL' | 'STARTER' | 'GROWTH' | 'ENTERPRISE'; subscriptionStatus?: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' }) =>
+    api.patch('/companies/current/plan', data),
 };

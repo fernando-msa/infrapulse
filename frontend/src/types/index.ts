@@ -2,6 +2,8 @@ export type TicketStatus = 'ABERTO' | 'EM_ANDAMENTO' | 'PENDENTE' | 'CONCLUIDO' 
 export type TicketPriority = 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
 export type SlaStatus = 'OK' | 'EM_RISCO' | 'VIOLADO';
 export type UserRole = 'ADMIN' | 'GESTOR' | 'ANALISTA';
+export type CompanyPlan = 'TRIAL' | 'STARTER' | 'GROWTH' | 'ENTERPRISE';
+export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
 
 export interface Ticket {
   id: string;
@@ -27,6 +29,34 @@ export interface User {
   role: UserRole;
   active: boolean;
   companyId?: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  slug: string;
+  cnpj?: string;
+  active: boolean;
+  plan: CompanyPlan;
+  subscriptionStatus: SubscriptionStatus;
+  seatLimit: number;
+  monthlyTicketLimit: number;
+  trialEndsAt?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  createdAt: string;
+}
+
+export interface CompanyUsage {
+  company: Company;
+  usage: {
+    usersCount: number;
+    usersLimit: number;
+    usersRemaining: number;
+    ticketsThisMonth: number;
+    ticketsLimit: number;
+    ticketsRemaining: number;
+  };
 }
 
 export interface DashboardKpis {

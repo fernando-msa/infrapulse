@@ -28,6 +28,16 @@ const PRIORITY_COLORS: Record<string, string> = {
   CRITICA: '#ef4444',
 };
 
+function progressWidthClass(percent: number) {
+  if (percent >= 100) return 'w-full';
+  if (percent >= 90) return 'w-11/12';
+  if (percent >= 75) return 'w-3/4';
+  if (percent >= 50) return 'w-1/2';
+  if (percent >= 25) return 'w-1/4';
+  if (percent > 0) return 'w-1/12';
+  return 'w-0';
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -141,8 +151,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${(s.count / (data?.rankingSetores[0]?.count || 1)) * 100}%` }}
+                            className={`h-full bg-blue-500 rounded-full ${progressWidthClass((s.count / (data?.rankingSetores[0]?.count || 1)) * 100)}`}
                           />
                         </div>
                       </div>
@@ -177,8 +186,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-purple-500 rounded-full"
-                            style={{ width: `${(c.count / (data?.rankingCategorias[0]?.count || 1)) * 100}%` }}
+                            className={`h-full bg-purple-500 rounded-full ${progressWidthClass((c.count / (data?.rankingCategorias[0]?.count || 1)) * 100)}`}
                           />
                         </div>
                       </div>
