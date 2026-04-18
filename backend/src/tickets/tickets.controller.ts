@@ -26,8 +26,8 @@ export class TicketsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar chamado por ID' })
-  findOne(@Param('id') id: string) {
-    return this.ticketsService.findById(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.ticketsService.findById(id, req.user.companyId);
   }
 
   @Post()
@@ -38,13 +38,13 @@ export class TicketsController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar chamado' })
-  update(@Param('id') id: string, @Body() updateDto: Partial<CreateTicketDto>) {
-    return this.ticketsService.update(id, updateDto);
+  update(@Param('id') id: string, @Body() updateDto: Partial<CreateTicketDto>, @Request() req: any) {
+    return this.ticketsService.update(id, updateDto, req.user.companyId);
   }
 
   @Post('recalculate-sla')
   @ApiOperation({ summary: 'Recalcular SLA de todos os chamados abertos' })
-  recalculateSla() {
-    return this.ticketsService.recalculateAllSla();
+  recalculateSla(@Request() req: any) {
+    return this.ticketsService.recalculateAllSla(req.user.companyId);
   }
 }

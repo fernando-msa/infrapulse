@@ -29,7 +29,7 @@ export class UsersController {
   @Post()
   @Roles(UserRole.ADMIN, UserRole.GESTOR)
   @ApiOperation({ summary: 'Criar usuário' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
+    return this.usersService.create(createUserDto, req.user.companyId);
   }
 }

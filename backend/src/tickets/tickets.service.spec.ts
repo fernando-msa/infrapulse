@@ -2,10 +2,15 @@ import { SlaStatus, TicketStatus } from '@prisma/client';
 import { TicketsService } from './tickets.service';
 
 describe('TicketsService', () => {
+  const companiesService = {
+    ensureTicketQuotaAvailable: jest.fn(),
+  };
+
   const prisma = {
     ticket: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -17,7 +22,7 @@ describe('TicketsService', () => {
     },
   };
 
-  const service = new TicketsService(prisma as any);
+  const service = new TicketsService(prisma as any, companiesService as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,6 +55,7 @@ describe('TicketsService', () => {
   });
 
   it('deve definir resolvedAt ao concluir ticket no update', async () => {
+    prisma.ticket.findFirst.mockResolvedValue({ id: 't1', companyId: 'c1' });
     prisma.ticket.update.mockResolvedValue({ id: 't1', status: TicketStatus.CONCLUIDO });
     const updateSlaSpy = jest.spyOn(service, 'updateSlaStatus').mockResolvedValue();
 

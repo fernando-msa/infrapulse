@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketStatus, TicketPriority, SlaStatus } from '@prisma/client';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { FilterTicketsDto } from './dto/filter-tickets.dto';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class TicketsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private companiesService: CompaniesService,
+  ) {}
 
   async findAll(filters: FilterTicketsDto, companyId?: string) {
     const where: any = {};
@@ -35,9 +39,12 @@ export class TicketsService {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.ticket.findUnique({
-      where: { id },
+  async findById(id: string, companyId?: string) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id,
+        ...(companyId ? { companyId } : {}),
+      },
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
         createdBy: { select: { id: true, name: true } },
@@ -45,9 +52,19 @@ export class TicketsService {
         importBatch: true,
       },
     });
+
+    if (!ticket) {
+      throw new NotFoundException('Chamado não encontrado');
+    }
+
+    return ticket;
   }
 
   async create(createTicketDto: CreateTicketDto, userId: string, companyId?: string) {
+    if (companyId) {
+      await this.companiesService.ensureTicketQuotaAvailable(companyId);
+    }
+
     const slaRule = await this.getSlaRule(createTicketDto.priority, companyId);
 
     let slaDeadline: Date | undefined;
@@ -71,7 +88,23 @@ export class TicketsService {
     });
   }
 
-  async update(id: string, data: Partial<CreateTicketDto>) {
+  async update(id: string, data: Partial<CreateTicketDto>, companyId?: string) {
+    const ticketExists = await this.prisma.ticket.findFirst({
+      where: {
+        id,
+        ...(companyId ? { companyId } : {}),
+      },
+      select: { id: true, companyId: true },
+    });
+
+    if (!ticketExists) {
+      throw new NotFoundException('Chamado não encontrado');
+    }
+
+    if (companyId && ticketExists.companyId !== companyId) {
+      throw new ForbiddenException('Acesso negado ao chamado');
+    }
+
     if (data.status === TicketStatus.CONCLUIDO) {
       (data as any).resolvedAt = new Date();
     }
@@ -124,9 +157,10 @@ export class TicketsService {
     });
   }
 
-  async recalculateAllSla() {
+  async recalculateAllSla(companyId?: string) {
     const openTickets = await this.prisma.ticket.findMany({
       where: {
+        ...(companyId ? { companyId } : {}),
         status: { notIn: [TicketStatus.CONCLUIDO, TicketStatus.CANCELADO] },
         slaDeadline: { not: null },
       },

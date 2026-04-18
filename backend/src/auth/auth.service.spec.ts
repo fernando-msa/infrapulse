@@ -4,6 +4,12 @@ import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
+  const prisma = {
+    company: {
+      findUnique: jest.fn(),
+    },
+  };
+
   const usersService = {
     findByEmail: jest.fn(),
     findById: jest.fn(),
@@ -13,7 +19,7 @@ describe('AuthService', () => {
     sign: jest.fn(),
   } as unknown as JwtService;
 
-  const service = new AuthService(usersService as any, jwtService);
+  const service = new AuthService(usersService as any, jwtService, prisma as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -31,6 +37,12 @@ describe('AuthService', () => {
     };
 
     usersService.findByEmail.mockResolvedValue(user);
+    prisma.company.findUnique.mockResolvedValue({
+      id: 'c1',
+      active: true,
+      subscriptionStatus: 'ACTIVE',
+      trialEndsAt: null,
+    });
     jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
     (jwtService.sign as jest.Mock).mockReturnValue('jwt-token');
 
@@ -59,6 +71,12 @@ describe('AuthService', () => {
     };
 
     usersService.findByEmail.mockResolvedValue(user);
+    prisma.company.findUnique.mockResolvedValue({
+      id: 'c1',
+      active: true,
+      subscriptionStatus: 'ACTIVE',
+      trialEndsAt: null,
+    });
     jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
     await expect(

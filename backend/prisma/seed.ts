@@ -16,11 +16,18 @@ async function main() {
 
   // Empresa
   const company = await prisma.company.upsert({
-    where: { cnpj: '00.000.000/0001-00' },
+    where: { slug: 'infrapulse-demo' },
     update: {},
     create: {
       name: 'InfraPulse Demo',
+      slug: 'infrapulse-demo',
       cnpj: '00.000.000/0001-00',
+      plan: 'GROWTH',
+      subscriptionStatus: 'ACTIVE',
+      seatLimit: 50,
+      monthlyTicketLimit: 10000,
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: addMinutes(new Date(), 43200),
     },
   });
 

@@ -1,11 +1,11 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { TicketStatus, TicketPriority } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 @Injectable()
 export class ImportService {
@@ -13,6 +13,47 @@ export class ImportService {
     private prisma: PrismaService,
     private ticketsService: TicketsService,
   ) {}
+
+  private async readExcelRecords(filePath: string): Promise<{ headers: string[]; records: any[] }> {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      return { headers: [], records: [] };
+    }
+
+    const headerRow = worksheet.getRow(1);
+    const headers = (headerRow.values as any[])
+      .slice(1)
+      .map((value) => String(value ?? '').trim())
+      .filter((value) => value.length > 0);
+
+    const records: any[] = [];
+
+    for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+      const row = worksheet.getRow(rowNumber);
+      const values = row.values as any[];
+
+      const record: Record<string, string> = {};
+      let hasContent = false;
+
+      headers.forEach((header, index) => {
+        const raw = values[index + 1];
+        const normalized = raw == null ? '' : String(raw).trim();
+        if (normalized) {
+          hasContent = true;
+        }
+        record[header] = normalized;
+      });
+
+      if (hasContent) {
+        records.push(record);
+      }
+    }
+
+    return { headers, records };
+  }
 
   async parseFile(filePath: string, originalName: string): Promise<{ headers: string[]; rows: any[] }> {
     const ext = path.extname(originalName).toLowerCase();
@@ -25,16 +66,9 @@ export class ImportService {
       headers = records.length > 0 ? Object.keys(records[0]) : [];
       rows = records.slice(0, 5); // Preview das primeiras 5 linhas
     } else if (['.xlsx', '.xls'].includes(ext)) {
-      const workbook = XLSX.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
-
-      if (data.length > 0) {
-        headers = data[0].map((h: any) => String(h));
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        rows = jsonData.slice(0, 5);
-      }
+      const parsed = await this.readExcelRecords(filePath);
+      headers = parsed.headers;
+      rows = parsed.records.slice(0, 5);
     }
 
     return { headers, rows };
@@ -63,10 +97,8 @@ export class ImportService {
       const content = fs.readFileSync(filePath, 'utf-8');
       records = parse(content, { columns: true, skip_empty_lines: true });
     } else {
-      const workbook = XLSX.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      records = XLSX.utils.sheet_to_json(sheet);
+      const parsed = await this.readExcelRecords(filePath);
+      records = parsed.records;
     }
 
     let imported = 0;
@@ -102,7 +134,7 @@ export class ImportService {
           },
         });
         imported++;
-      } catch (e) {
+      } catch {
         errors++;
       }
     }

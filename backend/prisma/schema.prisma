@@ -13,6 +13,20 @@ enum UserRole {
   ANALISTA
 }
 
+enum CompanyPlan {
+  TRIAL
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
 enum TicketStatus {
   ABERTO
   EM_ANDAMENTO
@@ -37,8 +51,16 @@ enum SlaStatus {
 model Company {
   id        String   @id @default(uuid())
   name      String
+  slug      String   @unique
   cnpj      String?  @unique
   active    Boolean  @default(true)
+  plan      CompanyPlan        @default(TRIAL)
+  subscriptionStatus SubscriptionStatus @default(TRIALING)
+  seatLimit Int      @default(5)
+  monthlyTicketLimit Int @default(200)
+  trialEndsAt DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
