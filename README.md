@@ -5,6 +5,7 @@
 Plataforma SaaS para gestão operacional de suporte de TI com foco em SLA, produtividade e risco.
 
 O produto atende operações de help desk, service desk e centrais de atendimento que precisam:
+
 - controlar volume e criticidade de chamados
 - acompanhar cumprimento de SLA
 - reduzir risco operacional por fila e equipe
@@ -106,14 +107,17 @@ curl -X POST http://localhost:3001/api/tickets \
 ## Endpoints principais
 
 ### Auth
+
 - `POST /api/auth/login`
 - `POST /api/auth/signup-company`
 
 ### Companies
+
 - `GET /api/companies/current`
 - `PATCH /api/companies/current/plan` (somente `ADMIN`)
 
 ### Tickets
+
 - `GET /api/tickets`
 - `GET /api/tickets/queue`
 - `GET /api/tickets/:id`
@@ -172,7 +176,7 @@ docker-compose up --build
 
 ## Rodando localmente (sem Docker)
 
-### Backend
+### Backend (local)
 
 ```bash
 cd backend
@@ -184,7 +188,7 @@ npx prisma db seed
 npm run start:dev
 ```
 
-### Frontend
+### Frontend (local)
 
 ```bash
 cd frontend
@@ -220,7 +224,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 ## Testes e cobertura
 
-### Backend
+### Backend (testes)
 
 ```bash
 cd backend
@@ -229,7 +233,7 @@ npm.cmd test -- --runInBand
 npm.cmd run test:cov
 ```
 
-### Frontend
+### Frontend (testes)
 
 ```bash
 cd frontend
