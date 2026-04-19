@@ -189,9 +189,9 @@ docker-compose up --build
 cd backend
 cp .env.example .env
 npm install
-npx prisma migrate dev
-npx prisma generate
-npx prisma db seed
+npm.cmd exec prisma db push
+npm.cmd exec prisma generate
+npm.cmd exec prisma db seed
 npm run start:dev
 ```
 
@@ -211,6 +211,62 @@ npm run dev
 | `admin@infrapulse.com` | admin123 | Admin |
 | `gestor@infrapulse.com` | gestor123 | Gestor |
 | `analista@infrapulse.com` | analista123 | Analista |
+| `joao@infrapulse.com` | analista123 | Analista |
+| `maria@infrapulse.com` | analista123 | Analista |
+| `pedro@infrapulse.com` | analista123 | Analista |
+| `juliana@infrapulse.com` | analista123 | Analista |
+| `bruno@infrapulse.com` | analista123 | Analista |
+
+## Testando a seed de demonstração (1200+ chamados)
+
+Esta seed foi desenhada para demo executiva e gera automaticamente:
+
+- 1200 chamados com status variados (`ABERTO`, `EM_ANDAMENTO`, `PENDENTE`, `CONCLUIDO`, `CANCELADO`)
+- SLA misto (`OK`, `EM_RISCO`, `VIOLADO`)
+- distribuição entre múltiplos analistas
+- categorias e setores realistas para cenário hospitalar/operações
+
+### Passo a passo rápido (Windows + Docker)
+
+1. Suba apenas o banco PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+1. Valide se o host local responde em `localhost:5432`:
+
+```powershell
+Test-NetConnection -ComputerName localhost -Port 5432
+```
+
+1. Prepare e aplique o schema no banco:
+
+```bash
+cd backend
+npm.cmd install
+npm.cmd exec prisma db push
+npm.cmd exec prisma generate
+```
+
+1. Execute a seed:
+
+```bash
+npm.cmd exec prisma db seed
+```
+
+1. Resultado esperado no terminal:
+
+```text
+Seed concluido com sucesso!
+Chamados gerados: 1200
+```
+
+### Observações
+
+- A seed recria os chamados da empresa demo (`infrapulse-demo`) a cada execução, evitando duplicação infinita.
+- Se preferir ambiente 100% local sem Docker, garanta que o PostgreSQL esteja rodando em `localhost:5432` antes de rodar o seed.
+- Em ambientes sem bloqueio de política do PowerShell, `npx prisma ...` também funciona.
 
 ## Variáveis de ambiente
 
