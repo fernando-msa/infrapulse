@@ -6,6 +6,13 @@ Monitore SLA e produtividade da sua TI em tempo real.
 
 InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI com foco em SLA, produtividade e risco. Ela ajuda times de help desk, service desk e centrais de atendimento a operar com mais previsibilidade, governança e isolamento por empresa.
 
+## SaaS em prática
+
+- Multi-tenant explícito por `companyId` em todas as rotas protegidas
+- JWT carrega `sub`, `email`, `role` e `companyId`
+- RBAC aplicado nos pontos sensíveis do produto
+- Fluxo operacional orientado a abertura, SLA, resolução e auditoria
+
 ## Por que o InfraPulse
 
 - Visibilidade em tempo real sobre SLA, fila e criticidade dos chamados
@@ -17,12 +24,45 @@ InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI com 
 ## Principais recursos
 
 - Onboarding self-service de empresa e administrador
-- Autenticação JWT com perfis (`ADMIN`, `GESTOR`, `ANALISTA`)
+- Autenticação JWT com payload do tenant e perfis (`ADMIN`, `GESTOR`, `ANALISTA`)
+- Multi-tenant real com middleware de isolamento por empresa
 - Dashboard executivo com KPIs de SLA e risco
 - Dashboard operacional com fila por técnico
 - Gestão de assinatura por plano com limites por empresa
+- RBAC documentado para operações sensíveis
 - Importação de CSV/Excel para carga de chamados
 - Alertas de risco e relatórios com exportação CSV
+
+## Autenticação, RBAC e fluxo
+
+### Multi-tenant explícito
+
+O tenant é resolvido a partir do JWT e usado como chave obrigatória em consultas protegidas. Isso evita vazamento entre empresas e mantém isolamento real de dados no backend.
+
+### Auth
+
+- `POST /api/auth/signup-company` cria empresa em trial, usuário administrador e sessão autenticada
+- `POST /api/auth/login` valida usuário, empresa ativa e status da assinatura antes de emitir o token
+- O token retorna `companyId`, `role` e `sub`, que são reutilizados nas rotas protegidas
+
+### RBAC
+
+O controle de acesso é explícito nos pontos de maior impacto operacional:
+
+| Ação | Perfis permitidos | Endpoint |
+| ---- | ----------------- | -------- |
+| Criar usuário | `ADMIN`, `GESTOR` | `POST /api/users` |
+| Atualizar plano da empresa | `ADMIN` | `PATCH /api/companies/current/plan` |
+| Operar chamados e dashboards do tenant | usuário autenticado da empresa | rotas protegidas por JWT |
+
+### Fluxo operacional do chamado
+
+1. O usuário abre o chamado com prioridade, categoria e setor.
+2. O sistema associa o chamado à empresa, calcula o SLA e grava os prazos de resposta e resolução.
+3. A fila operacional é organizada por técnico, com visão de sobrecarga e criticidade.
+4. O chamado segue por `ABERTO`, `EM_ANDAMENTO`, `PENDENTE`, até `CONCLUIDO` ou `CANCELADO`.
+5. Ao concluir, o sistema registra a resolução e recalcula o status de SLA como `OK`, `EM_RISCO` ou `VIOLADO`.
+6. Toda mudança relevante pode ser auditada para governança e compliance.
 
 ## Prints do sistema
 
