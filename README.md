@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml)
 
-Monitore SLA e produtividade da sua TI em tempo real.
+Monitore SLA, produtividade e risco operacional da sua TI em tempo real.
 
-InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI com foco em SLA, produtividade e risco. Ela ajuda times de help desk, service desk e centrais de atendimento a operar com mais previsibilidade, governança e isolamento por empresa.
+InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI, pensada para times que precisam escalar com previsibilidade, governança e isolamento por empresa sem perder controle técnico sobre SLA, fila e resolução.
 
 ## SaaS em prática
 
@@ -15,11 +15,11 @@ InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI com 
 
 ## Por que o InfraPulse
 
-- Visibilidade em tempo real sobre SLA, fila e criticidade dos chamados
-- Redução de risco operacional com alertas e acompanhamento por equipe
-- Modelo multiempresa com isolamento de dados por tenant
-- Controle de assinatura, plano e limites por empresa
-- Onboarding rápido para empresa e administrador
+- Operação orientada por indicadores: SLA, fila, criticidade e throughput em tempo real
+- Redução de risco com alertas acionáveis e priorização por impacto operacional
+- Arquitetura SaaS multiempresa com isolamento de dados por tenant (`companyId`)
+- Gestão de crescimento com planos, limites e regras de assinatura por empresa
+- Onboarding rápido com criação de empresa, administrador e sessão autenticada no mesmo fluxo
 
 ## Principais recursos
 
@@ -508,6 +508,8 @@ Esta seed foi desenhada para demo executiva e gera automaticamente:
 - SLA misto (`OK`, `EM_RISCO`, `VIOLADO`)
 - distribuição entre múltiplos analistas
 - categorias e setores realistas para cenário hospitalar/operações
+
+No ambiente de demo, a seed será carregada para entregar uma experiência de validação mais realista e guiada, com dados operacionais prontos para que qualquer testador consiga explorar, medir e validar rapidamente os fluxos de SLA, fila e resolução.
 
 ### Passo a passo rápido (Windows + Docker)
 
