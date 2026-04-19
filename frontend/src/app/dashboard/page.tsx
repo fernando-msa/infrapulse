@@ -55,6 +55,10 @@ export default function DashboardPage() {
   const kpis = data?.kpis;
   const monthlyTrend = data?.monthlyTrend || [];
   const analystPerformance = data?.performanceByAnalyst || [];
+  const latestTrend = monthlyTrend[monthlyTrend.length - 1];
+  const previousTrend = monthlyTrend.length > 1 ? monthlyTrend[monthlyTrend.length - 2] : undefined;
+  const trendDelta = latestTrend && previousTrend ? latestTrend.percentualSlaOk - previousTrend.percentualSlaOk : 0;
+  const topAnalyst = analystPerformance[0];
 
   return (
     <AppLayout>
@@ -69,6 +73,60 @@ export default function DashboardPage() {
             { label: 'Fora do SLA', value: loading ? '—' : `${kpis?.violados ?? 0}` },
           ]}
         />
+
+        <Card className="overflow-hidden border-slate-200/80 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 text-white shadow-[0_24px_70px_rgba(15,23,42,0.28)]">
+          <CardContent className="relative p-6 md:p-7">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.22),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(59,130,246,0.18),_transparent_24%)]" />
+            <div className="relative grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+              <div className="space-y-4">
+                <span className="inline-flex w-fit items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                  Leitura executiva
+                </span>
+                <div className="space-y-3">
+                  <h2 className="max-w-2xl text-2xl font-semibold tracking-tight md:text-3xl">
+                    Operação sob controle com {kpis?.percentualSlaOk ?? 0}% de SLA geral e {kpis?.violados ?? 0} chamados fora do prazo.
+                  </h2>
+                  <p className="max-w-2xl text-sm leading-6 text-slate-300 md:text-[15px]">
+                    A visão consolida desempenho, tendência mensal e eficiência por analista para acelerar decisão de gestão em ambiente hospitalar.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4 backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200">SLA geral</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{loading ? '—' : `${kpis?.percentualSlaOk ?? 0}%`}</p>
+                    <p className="text-xs text-slate-300">{loading ? 'Carregando leitura' : 'cumprimento da meta operacional'}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4 backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200">Tendência</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">
+                      {loading ? '—' : `${trendDelta >= 0 ? '+' : ''}${trendDelta}%`}
+                    </p>
+                    <p className="text-xs text-slate-300">vs. mês anterior no SLA geral</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4 backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200">Analista líder</p>
+                    <p className="mt-1 truncate text-2xl font-semibold text-white">{loading ? '—' : topAnalyst?.name || 'Sem dados'}</p>
+                    <p className="text-xs text-slate-300">{loading ? 'Carregando leitura' : `${topAnalyst?.percentualSlaOk ?? 0}% SLA OK`}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/7 p-4 backdrop-blur md:grid-cols-2 lg:grid-cols-1">
+                <div className="rounded-2xl bg-white/8 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">Tempo médio de atendimento</p>
+                  <p className="mt-2 text-3xl font-semibold text-white">{loading ? '—' : `${kpis?.tempoMedioAtendimento ?? 0}h`}</p>
+                  <p className="text-xs text-slate-300">Tempo médio de fechamento dos chamados concluídos</p>
+                </div>
+                <div className="rounded-2xl bg-white/8 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">Fora do SLA</p>
+                  <p className="mt-2 text-3xl font-semibold text-white">{loading ? '—' : `${kpis?.violados ?? 0}`}</p>
+                  <p className="text-xs text-slate-300">Chamados que pedem intervenção imediata</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPIs Row 1 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
