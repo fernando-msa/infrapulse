@@ -6,9 +6,9 @@ import { TicketStatus, SlaStatus, TicketPriority } from '@prisma/client';
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async getExecutiveDashboard(companyId?: string, startDate?: string, endDate?: string) {
-    const where: any = {};
-    if (companyId) where.companyId = companyId;
+  async getExecutiveDashboard(companyId: string, startDate?: string, endDate?: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
+    const where: any = { companyId };
     if (startDate || endDate) {
       where.openedAt = {};
       if (startDate) where.openedAt.gte = new Date(startDate);
@@ -210,11 +210,12 @@ export class DashboardService {
     };
   }
 
-  async getOperationalDashboard(companyId?: string) {
+  async getOperationalDashboard(companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     const where: any = {
+      companyId, // Isolamento
       status: { notIn: [TicketStatus.CONCLUIDO, TicketStatus.CANCELADO] },
     };
-    if (companyId) where.companyId = companyId;
 
     const [emRisco, criticos] = await Promise.all([
       this.prisma.ticket.findMany({

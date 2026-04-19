@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -8,6 +8,9 @@ import { ImportModule } from './import/import.module';
 import { ReportsModule } from './reports/reports.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { CompaniesModule } from './companies/companies.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { AuditModule } from './audit/audit.module';
+import { TenantIsolationMiddleware } from './common/middleware/tenant-isolation.middleware';
 
 @Module({
   imports: [
@@ -20,6 +23,13 @@ import { CompaniesModule } from './companies/companies.module';
     ReportsModule,
     AlertsModule,
     CompaniesModule,
+    MetricsModule,
+    AuditModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Aplicar middleware globalmente para todas as rotas
+    consumer.apply(TenantIsolationMiddleware).forRoutes('*');
+  }
+}

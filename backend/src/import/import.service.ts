@@ -149,8 +149,10 @@ export class ImportService {
       },
     });
 
-    // Recalcular SLA de todos
-    await this.ticketsService.recalculateAllSla();
+    // Recalcular SLA de todos (isolamento por tenant)
+    if (companyId) {
+      await this.ticketsService.recalculateAllSla(companyId);
+    }
 
     return { batchId: batch.id, total: records.length, imported, errors };
   }

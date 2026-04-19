@@ -5,10 +5,9 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getTicketsReport(filters: any, companyId?: string) {
-    const where: any = {};
-
-    if (companyId) where.companyId = companyId;
+  async getTicketsReport(filters: any, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
+    const where: any = { companyId };
     if (filters?.status) where.status = filters.status;
     if (filters?.priority) where.priority = filters.priority;
     if (filters?.slaStatus) where.slaStatus = filters.slaStatus;

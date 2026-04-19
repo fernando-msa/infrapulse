@@ -12,10 +12,10 @@ export class TicketsService {
     private companiesService: CompaniesService,
   ) {}
 
-  async findAll(filters: FilterTicketsDto, companyId?: string) {
-    const where: any = {};
+  async findAll(filters: FilterTicketsDto, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant - companyId sempre vem do JWT
+    const where: any = { companyId };
 
-    if (companyId) where.companyId = companyId;
     if (filters.status) where.status = filters.status;
     if (filters.priority) where.priority = filters.priority;
     if (filters.sector) where.sector = { contains: filters.sector, mode: 'insensitive' };
@@ -39,12 +39,10 @@ export class TicketsService {
     });
   }
 
-  async findById(id: string, companyId?: string) {
+  async findById(id: string, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id,
-        ...(companyId ? { companyId } : {}),
-      },
+      where: { id, companyId },
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
         createdBy: { select: { id: true, name: true } },
@@ -60,10 +58,9 @@ export class TicketsService {
     return ticket;
   }
 
-  async create(createTicketDto: CreateTicketDto, userId: string, companyId?: string) {
-    if (companyId) {
-      await this.companiesService.ensureTicketQuotaAvailable(companyId);
-    }
+  async create(createTicketDto: CreateTicketDto, userId: string, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
+    await this.companiesService.ensureTicketQuotaAvailable(companyId);
 
     const slaRule = await this.getSlaRule(createTicketDto.priority, companyId);
 
@@ -88,12 +85,10 @@ export class TicketsService {
     });
   }
 
-  async update(id: string, data: Partial<CreateTicketDto>, companyId?: string) {
+  async update(id: string, data: Partial<CreateTicketDto>, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     const ticketExists = await this.prisma.ticket.findFirst({
-      where: {
-        id,
-        ...(companyId ? { companyId } : {}),
-      },
+      where: { id, companyId },
       select: { id: true, companyId: true },
     });
 
@@ -101,10 +96,7 @@ export class TicketsService {
       throw new NotFoundException('Chamado não encontrado');
     }
 
-    if (companyId && ticketExists.companyId !== companyId) {
-      throw new ForbiddenException('Acesso negado ao chamado');
-    }
-
+    // Já isolado por companyId na query acima
     if (data.status === TicketStatus.CONCLUIDO) {
       (data as any).resolvedAt = new Date();
     }
@@ -157,10 +149,11 @@ export class TicketsService {
     });
   }
 
-  async recalculateAllSla(companyId?: string) {
+  async recalculateAllSla(companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     const openTickets = await this.prisma.ticket.findMany({
       where: {
-        ...(companyId ? { companyId } : {}),
+        companyId, // Isolamento
         status: { notIn: [TicketStatus.CONCLUIDO, TicketStatus.CANCELADO] },
         slaDeadline: { not: null },
       },
@@ -171,21 +164,20 @@ export class TicketsService {
     }
   }
 
-  private async getSlaRule(priority: TicketPriority, companyId?: string) {
+  private async getSlaRule(priority: TicketPriority, companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     return this.prisma.slaRule.findFirst({
-      where: {
-        priority,
-        ...(companyId ? { companyId } : {}),
-      },
+      where: { priority, companyId },
     });
   }
 
-  async getQueueByTechnician(companyId?: string) {
+  async getQueueByTechnician(companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     const technicians = await this.prisma.user.findMany({
       where: {
         role: { in: ['ANALISTA', 'GESTOR'] },
         active: true,
-        ...(companyId ? { companyId } : {}),
+        companyId, // Isolamento
       },
     });
 
@@ -194,6 +186,7 @@ export class TicketsService {
         const tickets = await this.prisma.ticket.findMany({
           where: {
             assignedToId: tech.id,
+            companyId, // Isolamento
             status: { in: [TicketStatus.ABERTO, TicketStatus.EM_ANDAMENTO, TicketStatus.PENDENTE] },
           },
           orderBy: [{ priority: 'desc' }, { openedAt: 'asc' }],

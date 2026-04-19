@@ -11,9 +11,10 @@ export class UsersService {
     private companiesService: CompaniesService,
   ) {}
 
-  async findAll(companyId?: string) {
+  async findAll(companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     return this.prisma.user.findMany({
-      where: companyId ? { companyId } : {},
+      where: { companyId },
       select: {
         id: true,
         name: true,
@@ -64,12 +65,13 @@ export class UsersService {
     });
   }
 
-  async getTechnicians(companyId?: string) {
+  async getTechnicians(companyId: string) {
+    // OBRIGATÓRIO: Isolamento multi-tenant
     return this.prisma.user.findMany({
       where: {
         role: { in: ['ANALISTA', 'GESTOR'] },
         active: true,
-        ...(companyId ? { companyId } : {}),
+        companyId, // Isolamento
       },
       select: { id: true, name: true, email: true, role: true },
     });

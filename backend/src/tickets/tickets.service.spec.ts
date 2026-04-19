@@ -59,7 +59,7 @@ describe('TicketsService', () => {
     prisma.ticket.update.mockResolvedValue({ id: 't1', status: TicketStatus.CONCLUIDO });
     const updateSlaSpy = jest.spyOn(service, 'updateSlaStatus').mockResolvedValue();
 
-    await service.update('t1', { status: TicketStatus.CONCLUIDO } as any);
+    await service.update('t1', { status: TicketStatus.CONCLUIDO } as any, 'c1');
 
     expect(prisma.ticket.update).toHaveBeenCalledWith(
       expect.objectContaining({
