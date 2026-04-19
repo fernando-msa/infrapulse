@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,16 +53,21 @@ export default function RelatoriosPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Relatórios</h1>
-            <p className="text-muted-foreground text-sm mt-1">{tickets.length} chamados no período</p>
-          </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="h-4 w-4" />
-            Exportar CSV
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Inteligência operacional"
+          title="Relatórios"
+          description="Exportação e análise histórica para auditoria, revisão de SLA e acompanhamento da operação."
+          meta={[
+            { label: 'Chamados no período', value: loading ? '—' : `${tickets.length}` },
+            { label: 'Filtros ativos', value: `${Object.keys(filters).length}` },
+          ]}
+          actions={(
+            <Button onClick={handleExport} variant="outline">
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </Button>
+          )}
+        />
 
         {/* Filtros */}
         <Card>

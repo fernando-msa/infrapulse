@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboardApi } from '@/lib/api';
@@ -54,10 +55,16 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard Executivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">Visão geral dos chamados e SLA</p>
-        </div>
+        <PageHeader
+          eyebrow="Visão executiva"
+          title="Dashboard Executivo"
+          description="Resumo da operação, leitura rápida de SLA e identificação dos pontos que exigem ação imediata."
+          meta={[
+            { label: 'Chamados', value: loading ? '—' : `${kpis?.total ?? 0}` },
+            { label: 'SLA OK', value: loading ? '—' : `${kpis?.percentualSlaOk ?? 0}%` },
+            { label: 'Em risco', value: loading ? '—' : `${kpis?.emRisco ?? 0}` },
+          ]}
+        />
 
         {/* KPIs Row 1 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

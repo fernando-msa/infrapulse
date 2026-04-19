@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { dashboardApi, ticketsApi } from '@/lib/api';
@@ -28,10 +29,16 @@ export default function OperacionalPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard Operacional</h1>
-          <p className="text-muted-foreground text-sm mt-1">Visão em tempo real das filas e riscos</p>
-        </div>
+        <PageHeader
+          eyebrow="Operação em tempo real"
+          title="Dashboard Operacional"
+          description="Fila, risco e sobrecarga em uma visão direta para priorização da equipe técnica."
+          meta={[
+            { label: 'Em risco', value: loading ? '—' : `${operational?.emRisco?.length || 0}` },
+            { label: 'Críticos', value: loading ? '—' : `${operational?.criticos?.length || 0}` },
+            { label: 'Técnicos', value: loading ? '—' : `${queue.length}` },
+          ]}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Em Risco */}

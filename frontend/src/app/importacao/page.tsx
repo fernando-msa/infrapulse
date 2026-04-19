@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -79,22 +80,27 @@ export default function ImportacaoPage() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-4xl">
-        <div>
-          <h1 className="text-2xl font-bold">Importação de Chamados</h1>
-          <p className="text-muted-foreground text-sm mt-1">Importe chamados via CSV ou Excel</p>
-        </div>
+        <PageHeader
+          eyebrow="Carga assistida"
+          title="Importação de Chamados"
+          description="Suba arquivos CSV ou Excel, mapeie colunas e acompanhe o histórico de processamentos."
+          meta={[
+            { label: 'Etapa', value: step === 'upload' ? 'Upload' : step === 'mapping' ? 'Mapeamento' : 'Resultado' },
+            { label: 'Histórico', value: `${batches.length}` },
+          ]}
+        />
 
         {/* Steps */}
         <div className="flex items-center gap-2 text-sm">
-          {['upload', 'mapping', 'result'].map((s, i) => (
+          {['upload', 'mapping', 'result'].map((s, i, list) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step === s ? 'bg-blue-600 text-white' : batches.length > 0 && i < ['upload','mapping','result'].indexOf(step) ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step === s ? 'bg-blue-600 text-white' : i < ['upload', 'mapping', 'result'].indexOf(step) ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                 {i + 1}
               </div>
               <span className={step === s ? 'font-medium' : 'text-muted-foreground'}>
                 {s === 'upload' ? 'Upload' : s === 'mapping' ? 'Mapeamento' : 'Resultado'}
               </span>
-              {i < 2 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+              {i < list.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
             </div>
           ))}
         </div>
@@ -121,6 +127,7 @@ export default function ImportacaoPage() {
                   id="file-input"
                   type="file"
                   accept=".csv,.xlsx,.xls"
+                  title="Selecionar arquivo para importação"
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                 />

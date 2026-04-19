@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,10 +65,16 @@ export default function AssinaturaPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Assinatura SaaS</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestão de plano, capacidade e consumo mensal.</p>
-        </div>
+        <PageHeader
+          eyebrow="Gestão comercial"
+          title="Assinatura SaaS"
+          description="Acompanhe capacidade, consumo e plano atual da empresa sem sair da operação."
+          meta={[
+            { label: 'Plano', value: loading ? '—' : `${planLabel[data?.company.plan || 'TRIAL']}` },
+            { label: 'Usuários', value: loading ? '—' : `${data?.usage.usersCount ?? 0}/${data?.usage.usersLimit ?? 0}` },
+            { label: 'Chamados', value: loading ? '—' : `${data?.usage.ticketsThisMonth ?? 0}/${data?.usage.ticketsLimit ?? 0}` },
+          ]}
+        />
 
         <Card>
           <CardHeader>

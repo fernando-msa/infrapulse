@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,18 +55,21 @@ export default function AlertasPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Alertas</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {data?.summary?.totalAlertas ?? '—'} alertas ativos no momento
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={load}>
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Gestão de risco"
+          title="Alertas"
+          description="Monitoramento de vencimentos, criticidade e sobrecarga para reduzir incidentes antes que virem escalonamento."
+          meta={[
+            { label: 'Alertas ativos', value: loading ? '—' : `${data?.summary?.totalAlertas ?? 0}` },
+            { label: 'Sobrecarregados', value: loading ? '—' : `${data?.tecnicosOverloaded?.length || 0}` },
+          ]}
+          actions={(
+            <Button variant="outline" size="sm" onClick={load}>
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          )}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {sections.map((section) => {

@@ -10,7 +10,7 @@ export function StatusBadge({ status }: { status: TicketStatus }) {
     CANCELADO: { label: 'Cancelado', variant: 'outline' },
   };
   const { label, variant } = map[status] || { label: status, variant: 'outline' };
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant} className="shadow-sm">{label}</Badge>;
 }
 
 export function PriorityBadge({ priority }: { priority: TicketPriority }) {
@@ -21,7 +21,7 @@ export function PriorityBadge({ priority }: { priority: TicketPriority }) {
     CRITICA: { label: 'Crítica', variant: 'danger' },
   };
   const { label, variant } = map[priority] || { label: priority, variant: 'outline' };
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant} className="shadow-sm">{label}</Badge>;
 }
 
 export function SlaBadge({ slaStatus }: { slaStatus: SlaStatus }) {
@@ -31,5 +31,5 @@ export function SlaBadge({ slaStatus }: { slaStatus: SlaStatus }) {
     VIOLADO: { label: 'Violado', variant: 'danger' },
   };
   const { label, variant } = map[slaStatus] || { label: slaStatus, variant: 'outline' };
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant} className="shadow-sm">{label}</Badge>;
 }

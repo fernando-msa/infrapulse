@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,16 +57,21 @@ export default function UsuariosPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Usuários</h1>
-            <p className="text-muted-foreground text-sm mt-1">{users.length} usuários cadastrados</p>
-          </div>
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
-            <Plus className="h-4 w-4" />
-            Novo Usuário
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Governança de acesso"
+          title="Usuários"
+          description="Criação e acompanhamento de usuários com controle por perfil e status de ativação."
+          meta={[
+            { label: 'Cadastrados', value: loading ? '—' : `${users.length}` },
+            { label: 'Formulário', value: showForm ? 'Aberto' : 'Fechado' },
+          ]}
+          actions={(
+            <Button onClick={() => setShowForm(!showForm)} size="sm">
+              <Plus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          )}
+        />
 
         {showForm && (
           <Card>

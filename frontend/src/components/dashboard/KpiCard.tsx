@@ -38,15 +38,15 @@ export function KpiCard({ title, value, subtitle, icon: Icon, color = 'blue', lo
   }
 
   return (
-    <Card className={cn('border-0 shadow-sm', colors.bg)}>
+    <Card className={cn('overflow-hidden border border-slate-200/80 bg-white/85 shadow-[0_16px_40px_rgba(15,23,42,0.06)] backdrop-blur', colors.bg)}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className={cn('text-3xl font-bold', colors.text)}>{value}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</p>
+            <p className={cn('text-3xl font-semibold tracking-tight text-slate-950', colors.text)}>{value}</p>
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className={cn('rounded-lg p-2.5', colors.icon)}>
+          <div className={cn('rounded-2xl p-2.5 shadow-sm', colors.icon)}>
             <Icon className="h-5 w-5" />
           </div>
         </div>

@@ -38,3 +38,4 @@ backend/uploads/
 # IDE
 .vscode/
 .idea/
+.antigravity/

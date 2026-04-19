@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,16 +50,21 @@ export default function ChamadosPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Chamados</h1>
-            <p className="text-muted-foreground text-sm mt-1">{filtered.length} chamados encontrados</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={loadTickets}>
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Gestão de fila"
+          title="Chamados"
+          description="Consulta, filtro e acompanhamento do backlog com foco em prioridade, SLA e técnico responsável."
+          meta={[
+            { label: 'Encontrados', value: loading ? '—' : `${filtered.length}` },
+            { label: 'Filtros', value: `${Object.keys(filters).length}` },
+          ]}
+          actions={(
+            <Button variant="outline" size="sm" onClick={loadTickets}>
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          )}
+        />
 
         {/* Filtros */}
         <Card>
