@@ -2,16 +2,19 @@
 
 [![CI](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml)
 
-Plataforma SaaS para gestão operacional de suporte de TI com foco em SLA, produtividade e risco.
+Monitore SLA e produtividade da sua TI em tempo real.
 
-O produto atende operações de help desk, service desk e centrais de atendimento que precisam:
+InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI com foco em SLA, produtividade e risco. Ela ajuda times de help desk, service desk e centrais de atendimento a operar com mais previsibilidade, governança e isolamento por empresa.
 
-- controlar volume e criticidade de chamados
-- acompanhar cumprimento de SLA
-- reduzir risco operacional por fila e equipe
-- operar em modelo multiempresa (multi-tenant) com isolamento de dados
+## Por que o InfraPulse
 
-## O que o InfraPulse entrega
+- Visibilidade em tempo real sobre SLA, fila e criticidade dos chamados
+- Redução de risco operacional com alertas e acompanhamento por equipe
+- Modelo multiempresa com isolamento de dados por tenant
+- Controle de assinatura, plano e limites por empresa
+- Onboarding rápido para empresa e administrador
+
+## Principais recursos
 
 - Onboarding self-service de empresa e administrador
 - Autenticação JWT com perfis (`ADMIN`, `GESTOR`, `ANALISTA`)
@@ -21,7 +24,7 @@ O produto atende operações de help desk, service desk e centrais de atendiment
 - Importação de CSV/Excel para carga de chamados
 - Alertas de risco e relatórios com exportação CSV
 
-## Prints (visão rápida)
+## Prints do sistema
 
 ### Cadastro de empresa (onboarding SaaS)
 
@@ -34,6 +37,10 @@ O produto atende operações de help desk, service desk e centrais de atendiment
 ### Assinatura e planos
 
 ![Assinatura e planos](docs/prints/assinatura-planos.svg)
+
+## Solicitar demo
+
+Quer ver o fluxo completo em ambiente guiado? [Solicitar demo via GitHub Issues](https://github.com/fernando-msa/infrapulse/issues) e avalie como o InfraPulse organiza SLA, filas e governança operacional em um único painel.
 
 ## Exemplo prático de uso
 
