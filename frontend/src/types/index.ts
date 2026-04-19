@@ -72,6 +72,35 @@ export interface DashboardKpis {
   tempoMedioAtendimento: number;
 }
 
+export interface DashboardMonthlyTrend {
+  month: string;
+  total: number;
+  concluidos: number;
+  violados: number;
+  percentualSlaOk: number;
+}
+
+export interface AnalystPerformance {
+  id: string;
+  name: string;
+  total: number;
+  concluidos: number;
+  emRisco: number;
+  violados: number;
+  percentualSlaOk: number;
+  tempoMedioAtendimento: number;
+}
+
+export interface DashboardExecutiveData {
+  kpis: DashboardKpis;
+  rankingSetores: Array<{ name: string; count: number }>;
+  rankingCategorias: Array<{ name: string; count: number }>;
+  byStatus: Array<{ status: TicketStatus; count: number }>;
+  byPriority: Array<{ priority: TicketPriority; count: number }>;
+  monthlyTrend: DashboardMonthlyTrend[];
+  performanceByAnalyst: AnalystPerformance[];
+}
+
 export interface TechnicianQueue {
   technician: User;
   ticketCount: number;

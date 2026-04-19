@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboardApi } from '@/lib/api';
+import type { DashboardExecutiveData } from '@/types';
 import {
   Ticket, CheckCircle, Clock, AlertTriangle, XCircle,
   TrendingUp, Activity, Timer,
@@ -12,6 +13,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
+  LineChart, Line,
 } from 'recharts';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -40,7 +42,7 @@ function progressWidthClass(percent: number) {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardExecutiveData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,6 +53,8 @@ export default function DashboardPage() {
   }, []);
 
   const kpis = data?.kpis;
+  const monthlyTrend = data?.monthlyTrend || [];
+  const analystPerformance = data?.performanceByAnalyst || [];
 
   return (
     <AppLayout>
@@ -58,28 +62,28 @@ export default function DashboardPage() {
         <PageHeader
           eyebrow="Visão executiva"
           title="Dashboard Executivo"
-          description="Resumo da operação, leitura rápida de SLA e identificação dos pontos que exigem ação imediata."
+          description="Resumo da operação com leitura de SLA, tempo de atendimento, carga fora do prazo e evolução mensal da TI."
           meta={[
             { label: 'Chamados', value: loading ? '—' : `${kpis?.total ?? 0}` },
-            { label: 'SLA OK', value: loading ? '—' : `${kpis?.percentualSlaOk ?? 0}%` },
-            { label: 'Em risco', value: loading ? '—' : `${kpis?.emRisco ?? 0}` },
+            { label: 'SLA geral', value: loading ? '—' : `${kpis?.percentualSlaOk ?? 0}%` },
+            { label: 'Fora do SLA', value: loading ? '—' : `${kpis?.violados ?? 0}` },
           ]}
         />
 
         {/* KPIs Row 1 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard title="Total de Chamados" value={kpis?.total ?? '—'} icon={Ticket} color="blue" loading={loading} />
-          <KpiCard title="Chamados Abertos" value={kpis?.abertos ?? '—'} icon={Activity} color="yellow" loading={loading} />
-          <KpiCard title="Concluídos" value={kpis?.concluidos ?? '—'} icon={CheckCircle} color="green" loading={loading} />
+          <KpiCard title="SLA Geral" value={kpis ? `${kpis.percentualSlaOk}%` : '—'} icon={TrendingUp} color="green" loading={loading} subtitle="cumprido" />
           <KpiCard title="Tempo Médio" value={kpis ? `${kpis.tempoMedioAtendimento}h` : '—'} icon={Timer} color="purple" loading={loading} subtitle="de atendimento" />
+          <KpiCard title="Fora do SLA" value={kpis?.violados ?? '—'} icon={XCircle} color="red" loading={loading} subtitle="chamados violados" />
         </div>
 
         {/* KPIs Row 2 — SLA */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard title="SLA Cumprido" value={kpis ? `${kpis.percentualSlaOk}%` : '—'} icon={TrendingUp} color="green" loading={loading} />
+          <KpiCard title="Chamados Abertos" value={kpis?.abertos ?? '—'} icon={Activity} color="yellow" loading={loading} />
+          <KpiCard title="Concluídos" value={kpis?.concluidos ?? '—'} icon={CheckCircle} color="green" loading={loading} />
+          <KpiCard title="Em Risco" value={kpis?.emRisco ?? '—'} icon={Clock} color="yellow" loading={loading} />
           <KpiCard title="SLA em Risco" value={kpis ? `${kpis.percentualSlaRisco}%` : '—'} icon={AlertTriangle} color="yellow" loading={loading} />
-          <KpiCard title="Chamados em Risco" value={kpis?.emRisco ?? '—'} icon={Clock} color="yellow" loading={loading} />
-          <KpiCard title="SLA Violado" value={kpis?.violados ?? '—'} icon={XCircle} color="red" loading={loading} />
         </div>
 
         {/* Charts */}
@@ -196,6 +200,80 @@ export default function DashboardPage() {
                             className={`h-full bg-purple-500 rounded-full ${progressWidthClass((c.count / (data?.rankingCategorias[0]?.count || 1)) * 100)}`}
                           />
                         </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Tendência Mensal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="h-72 bg-muted animate-pulse rounded" />
+              ) : monthlyTrend.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">Nenhum dado disponível</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={monthlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="total" name="Total" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="concluidos" name="Concluídos" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="violados" name="Fora do SLA" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Performance por Analista</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded" />)}
+                </div>
+              ) : analystPerformance.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">Nenhum dado disponível</p>
+              ) : (
+                <div className="space-y-4">
+                  {analystPerformance.map((analyst) => (
+                    <div key={analyst.id} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-slate-950">{analyst.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {analyst.concluidos} concluídos • {analyst.tempoMedioAtendimento}h médio
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-950">{analyst.total} chamados</p>
+                          <p className="text-xs text-muted-foreground">{analyst.percentualSlaOk}% SLA OK</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-500 ${progressWidthClass(Math.max(analyst.percentualSlaOk, 6))}`}
+                        />
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-lg bg-white px-2 py-1 border border-slate-200">Fora do SLA: {analyst.violados}</span>
+                        <span className="rounded-lg bg-white px-2 py-1 border border-slate-200">Risco: {analyst.emRisco}</span>
+                        <span className="rounded-lg bg-white px-2 py-1 border border-slate-200">Ativos: {analyst.total}</span>
                       </div>
                     </div>
                   ))}
