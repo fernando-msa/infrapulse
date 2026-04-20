@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditAction, AuditEntity } from '@prisma/client';
+import { FirebaseService } from '../firebase/firebase.service';
 
 interface AuditLogInput {
   action: AuditAction;
@@ -26,12 +27,40 @@ interface AuditLogInput {
  */
 @Injectable()
 export class AuditService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private firebaseService: FirebaseService,
+  ) {}
+
+  private get isFirebase() {
+    return process.env.DATA_PROVIDER === 'firebase';
+  }
 
   /**
    * Registra uma ação na auditoria
    */
   async logAction(input: AuditLogInput) {
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+      const ref = db.collection('audit_logs').doc();
+      const log = {
+        id: ref.id,
+        action: input.action,
+        entity: input.entity,
+        entityId: input.entityId,
+        companyId: input.companyId,
+        userId: input.userId || null,
+        changes: input.changes || null,
+        description: input.description || null,
+        ipAddress: input.ipAddress || null,
+        userAgent: input.userAgent || null,
+        createdAt: new Date(),
+      };
+
+      await ref.set(log);
+      return log;
+    }
+
     return this.prisma.auditLog.create({
       data: {
         action: input.action,
@@ -226,6 +255,23 @@ export class AuditService {
     companyId: string,
     limit: number = 50,
   ) {
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+      const logsSnap = await db
+        .collection('audit_logs')
+        .where('companyId', '==', companyId)
+        .where('entity', '==', entity)
+        .where('entityId', '==', entityId)
+        .get();
+
+      const logs = logsSnap.docs
+        .map((doc) => this.normalizeLog(doc.data()))
+        .sort((a, b) => (this.toDate(b.createdAt)?.getTime() || 0) - (this.toDate(a.createdAt)?.getTime() || 0))
+        .slice(0, limit);
+
+      return this.attachUsers(logs);
+    }
+
     return this.prisma.auditLog.findMany({
       where: { entity, entityId, companyId },
       include: {
@@ -250,6 +296,33 @@ export class AuditService {
     },
     limit: number = 100,
   ) {
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+      const logsSnap = await db.collection('audit_logs').where('companyId', '==', companyId).get();
+
+      let logs = logsSnap.docs.map((doc) => this.normalizeLog(doc.data()));
+
+      if (filters?.action) logs = logs.filter((x) => x.action === filters.action);
+      if (filters?.entity) logs = logs.filter((x) => x.entity === filters.entity);
+      if (filters?.userId) logs = logs.filter((x) => x.userId === filters.userId);
+
+      if (filters?.startDate || filters?.endDate) {
+        logs = logs.filter((x) => {
+          const createdAt = this.toDate(x.createdAt);
+          if (!createdAt) return false;
+          if (filters.startDate && createdAt < filters.startDate) return false;
+          if (filters.endDate && createdAt > filters.endDate) return false;
+          return true;
+        });
+      }
+
+      logs = logs
+        .sort((a, b) => (this.toDate(b.createdAt)?.getTime() || 0) - (this.toDate(a.createdAt)?.getTime() || 0))
+        .slice(0, limit);
+
+      return this.attachUsers(logs);
+    }
+
     const where: any = { companyId };
 
     if (filters?.action) where.action = filters.action;
@@ -281,6 +354,25 @@ export class AuditService {
     startDate: Date,
     endDate: Date,
   ) {
+    if (this.isFirebase) {
+      const logs = await this.getCompanyAudit(
+        companyId,
+        {
+          startDate,
+          endDate,
+        },
+        Number.MAX_SAFE_INTEGER,
+      );
+
+      return {
+        company: { id: companyId },
+        period: { start: startDate, end: endDate },
+        totalLogs: logs.length,
+        logs,
+        exportedAt: new Date(),
+      };
+    }
+
     const logs = await this.prisma.auditLog.findMany({
       where: {
         companyId,
@@ -312,6 +404,28 @@ export class AuditService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+      const logsSnap = await db.collection('audit_logs').get();
+
+      const oldDocs = logsSnap.docs.filter((doc) => {
+        const createdAt = this.toDate(doc.data()?.createdAt);
+        return createdAt && createdAt < cutoffDate;
+      });
+
+      let deletedCount = 0;
+      for (const doc of oldDocs) {
+        await doc.ref.delete();
+        deletedCount += 1;
+      }
+
+      return {
+        deletedCount,
+        cutoffDate,
+        message: `${deletedCount} logs antigos deletados (>= ${daysOld} dias)`,
+      };
+    }
+
     const result = await this.prisma.auditLog.deleteMany({
       where: {
         createdAt: { lt: cutoffDate },
@@ -323,5 +437,43 @@ export class AuditService {
       cutoffDate,
       message: `${result.count} logs antigos deletados (>= ${daysOld} dias)`,
     };
+  }
+
+  private async attachUsers(logs: any[]) {
+    if (!this.isFirebase) return logs;
+
+    const db = this.firebaseService.getDb();
+    const ids = Array.from(new Set(logs.map((x) => x.userId).filter(Boolean)));
+    if (ids.length === 0) return logs;
+
+    const users = await Promise.all(ids.map((id) => db.collection('users').doc(id).get()));
+    const userMap = new Map(
+      users
+        .filter((doc) => doc.exists)
+        .map((doc) => {
+          const u: any = doc.data();
+          return [u.id, { id: u.id, name: u.name, email: u.email }];
+        }),
+    );
+
+    return logs.map((log) => ({
+      ...log,
+      user: log.userId ? userMap.get(log.userId) || null : null,
+    }));
+  }
+
+  private normalizeLog(log: any) {
+    return {
+      ...log,
+      createdAt: this.toDate(log?.createdAt),
+    };
+  }
+
+  private toDate(value: any): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value?.toDate === 'function') return value.toDate();
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 }

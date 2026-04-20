@@ -1,14 +1,24 @@
-FROM node:18-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
+RUN npm run build
 
-RUN npx prisma generate
+FROM node:20-alpine AS runner
 
-EXPOSE 3001
+WORKDIR /app
+ENV NODE_ENV=production
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm run start:dev"]
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "PORT=${PORT:-8080} npm run start:prod"]

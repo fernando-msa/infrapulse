@@ -11,6 +11,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { AuditModule } from './audit/audit.module';
 import { TenantIsolationMiddleware } from './common/middleware/tenant-isolation.middleware';
+import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TenantIsolationMiddleware } from './common/middleware/tenant-isolation.
     CompaniesModule,
     MetricsModule,
     AuditModule,
+    FirebaseModule,
   ],
 })
 export class AppModule implements NestModule {

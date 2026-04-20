@@ -22,7 +22,11 @@ describe('TicketsService', () => {
     },
   };
 
-  const service = new TicketsService(prisma as any, companiesService as any);
+  const firebaseService = {
+    getDb: jest.fn(),
+  };
+
+  const service = new TicketsService(prisma as any, companiesService as any, firebaseService as any);
 
   beforeEach(() => {
     jest.clearAllMocks();

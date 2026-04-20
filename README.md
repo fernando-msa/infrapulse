@@ -192,10 +192,25 @@ curl -X POST http://localhost:3001/api/tickets \
 | Frontend | Next.js 14 + TypeScript |
 | Estilo | Tailwind CSS + shadcn/ui |
 | Backend | NestJS |
-| Banco | PostgreSQL |
+| Banco | Firebase Cloud Firestore |
 | ORM | Prisma |
 | Auth | JWT |
-| Infra | Docker + Docker Compose |
+| Infra | Vercel (frontend) + Cloud Run (backend) |
+
+> Observacao: o acesso ao Firestore no backend ja esta preparado via `firebase-admin`. Partes legadas do projeto ainda utilizam Prisma durante a transicao incremental.
+
+## Deploy alvo em cloud
+
+### Frontend (Vercel)
+
+- Deploy do projeto Next.js a partir da pasta `frontend`
+- Variavel obrigatoria: `NEXT_PUBLIC_API_URL` apontando para a URL publica do backend no Cloud Run
+
+### Backend (Cloud Run)
+
+- Container de producao com `npm run start:prod` e porta dinamica (`PORT`)
+- Endpoint de validacao de conectividade Firestore: `GET /api/infra/firestore/ping`
+- Acesso ao banco via `firebase-admin` com service account do runtime (ou credenciais por env)
 
 ## Isolamento Multi-Tenant (Padrão SaaS)
 
@@ -448,21 +463,44 @@ infrapulse/
 ## Pré-requisitos
 
 - Node.js 18+
-- Docker + Docker Compose
+- Conta Vercel (frontend)
+- Projeto no Google Cloud com Cloud Run e Firestore habilitados
+- Google Cloud SDK (`gcloud`) para deploy do backend
 - npm ou yarn
 
-## Rodando com Docker (recomendado)
+## Deploy recomendado (Vercel + Cloud Run)
 
-```bash
-git clone https://github.com/fernando-msa/infrapulse.git
-cd infrapulse
-docker-compose up --build
+### 1. Frontend na Vercel
+
+- Root Directory: `frontend`
+- Build Command: `npm run build`
+- Install Command: `npm install`
+- Variavel obrigatoria:
+
+```env
+NEXT_PUBLIC_API_URL=https://SEU_BACKEND_CLOUD_RUN.run.app
 ```
 
-- Frontend: <http://localhost:3000>
-- Backend API: <http://localhost:3001>
-- Swagger: <http://localhost:3001/api/docs>
-- PostgreSQL: `localhost:5432`
+### 2. Backend no Cloud Run
+
+No backend, configure as variaveis de ambiente e execute o deploy:
+
+```bash
+cd backend
+gcloud run deploy infrapulse-backend \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+Depois do deploy, valide:
+
+- Health Firestore: `GET /api/infra/firestore/ping`
+- Swagger: `https://SEU_BACKEND_CLOUD_RUN.run.app/api/docs`
+
+## Rodando localmente (modo legado)
+
+Se quiser validar os fluxos antigos baseados em Prisma/PostgreSQL localmente, use o setup abaixo.
 
 ## Rodando localmente (sem Docker)
 
@@ -654,10 +692,18 @@ Resposta exemplo:
 
 ```env
 DATABASE_URL=postgresql://infrapulse:infrapulse@localhost:5432/infrapulse
+DATA_PROVIDER=firebase
 JWT_SECRET=sua_chave_jwt_super_secreta
 JWT_EXPIRES_IN=7d
 PORT=3001
+FIREBASE_PROJECT_ID=seu_projeto_firebase
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxx@seu_projeto.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\\nSUA_CHAVE\\n-----END PRIVATE KEY-----\\n"
 ```
+
+No Cloud Run, quando a service account da aplicacao tiver permissao no Firestore,
+`FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` podem ser omitidas (o `firebase-admin`
+usa as credenciais padrao do runtime).
 
 ### Frontend (`frontend/.env.example`)
 

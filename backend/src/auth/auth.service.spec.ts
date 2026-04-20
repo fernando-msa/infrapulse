@@ -19,7 +19,11 @@ describe('AuthService', () => {
     sign: jest.fn(),
   } as unknown as JwtService;
 
-  const service = new AuthService(usersService as any, jwtService, prisma as any);
+  const firebaseService = {
+    getDb: jest.fn(),
+  };
+
+  const service = new AuthService(usersService as any, jwtService, prisma as any, firebaseService as any);
 
   beforeEach(() => {
     jest.clearAllMocks();

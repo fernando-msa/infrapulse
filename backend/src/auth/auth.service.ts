@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { SignupCompanyDto } from './dto/signup-company.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +13,12 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private prisma: PrismaService,
+    private firebaseService: FirebaseService,
   ) {}
+
+  private get isFirebase() {
+    return process.env.DATA_PROVIDER === 'firebase';
+  }
 
   private generateSlug(value: string) {
     return value
@@ -31,9 +37,21 @@ export class AuthService {
     let slug = base;
     let idx = 1;
 
-    while (await this.prisma.company.findUnique({ where: { slug } })) {
-      slug = `${base}-${idx}`;
-      idx += 1;
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+      while (true) {
+        const match = await db.collection('companies').where('slug', '==', slug).limit(1).get();
+        if (match.empty) {
+          break;
+        }
+        slug = `${base}-${idx}`;
+        idx += 1;
+      }
+    } else {
+      while (await this.prisma.company.findUnique({ where: { slug } })) {
+        slug = `${base}-${idx}`;
+        idx += 1;
+      }
     }
 
     return slug;
@@ -50,6 +68,71 @@ export class AuthService {
     const now = new Date();
     const trialEndsAt = new Date(now);
     trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+    if (this.isFirebase) {
+      const db = this.firebaseService.getDb();
+
+      const companyRef = db.collection('companies').doc();
+      const company = {
+        id: companyRef.id,
+        name: dto.companyName,
+        slug,
+        cnpj: dto.cnpj || null,
+        active: true,
+        plan: 'TRIAL',
+        subscriptionStatus: 'TRIALING',
+        seatLimit: 5,
+        monthlyTicketLimit: 200,
+        trialEndsAt,
+        currentPeriodStart: now,
+        currentPeriodEnd: trialEndsAt,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await companyRef.set(company);
+
+      const userRef = db.collection('users').doc();
+      const user = {
+        id: userRef.id,
+        name: dto.adminName,
+        email: dto.adminEmail,
+        password: hashedPassword,
+        role: 'ADMIN',
+        active: true,
+        companyId: company.id,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await userRef.set(user);
+
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        companyId: user.companyId,
+      };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          companyId: user.companyId,
+        },
+        company: {
+          id: company.id,
+          name: company.name,
+          slug: company.slug,
+          plan: company.plan,
+          subscriptionStatus: company.subscriptionStatus,
+          trialEndsAt: company.trialEndsAt,
+        },
+      };
+    }
 
     const company = await this.prisma.company.create({
       data: {
@@ -118,7 +201,9 @@ export class AuthService {
       throw new UnauthorizedException('Usuário sem empresa vinculada');
     }
 
-    const company = await this.prisma.company.findUnique({ where: { id: user.companyId } });
+    const company = this.isFirebase
+      ? await this.findCompanyByIdFirebase(user.companyId)
+      : await this.prisma.company.findUnique({ where: { id: user.companyId } });
     if (!company || !company.active) {
       throw new UnauthorizedException('Empresa inativa ou inexistente');
     }
@@ -160,5 +245,15 @@ export class AuthService {
 
   async validateUser(payload: any) {
     return this.usersService.findById(payload.sub);
+  }
+
+  private async findCompanyByIdFirebase(companyId: string) {
+    const db = this.firebaseService.getDb();
+    const doc = await db.collection('companies').doc(companyId).get();
+    if (!doc.exists) {
+      return null;
+    }
+
+    return doc.data() as any;
   }
 }
