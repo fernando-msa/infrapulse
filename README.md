@@ -1,739 +1,167 @@
 # InfraPulse
 
+> SaaS platform for IT support operations -- SLA tracking, team performance, and operational intelligence.
+
 [![CI](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fernando-msa/infrapulse/actions/workflows/ci.yml)
-
-Monitore SLA, produtividade e risco operacional da sua TI em tempo real.
-
-InfraPulse é uma plataforma SaaS para gestão operacional de suporte de TI, pensada para times que precisam escalar com previsibilidade, governança e isolamento por empresa sem perder controle técnico sobre SLA, fila e resolução.
-
-## SaaS em prática
-
-- Multi-tenant explícito por `companyId` em todas as rotas protegidas
-- JWT carrega `sub`, `email`, `role` e `companyId`
-- RBAC aplicado nos pontos sensíveis do produto
-- Fluxo operacional orientado a abertura, SLA, resolução e auditoria
-
-## Por que o InfraPulse
-
-- Operação orientada por indicadores: SLA, fila, criticidade e throughput em tempo real
-- Redução de risco com alertas acionáveis e priorização por impacto operacional
-- Arquitetura SaaS multiempresa com isolamento de dados por tenant (`companyId`)
-- Gestão de crescimento com planos, limites e regras de assinatura por empresa
-- Onboarding rápido com criação de empresa, administrador e sessão autenticada no mesmo fluxo
-
-## Principais recursos
-
-- Onboarding self-service de empresa e administrador
-- Autenticação JWT com payload do tenant e perfis (`ADMIN`, `GESTOR`, `ANALISTA`)
-- Multi-tenant real com middleware de isolamento por empresa
-- Dashboard executivo com KPIs de SLA e risco
-- Dashboard operacional com fila por técnico
-- Gestão de assinatura por plano com limites por empresa
-- RBAC documentado para operações sensíveis
-- Importação de CSV/Excel para carga de chamados
-- Alertas de risco e relatórios com exportação CSV
-
-## Autenticação, RBAC e fluxo
-
-### Multi-tenant explícito
-
-O tenant é resolvido a partir do JWT e usado como chave obrigatória em consultas protegidas. Isso evita vazamento entre empresas e mantém isolamento real de dados no backend.
-
-### Auth
-
-- `POST /api/auth/signup-company` cria empresa em trial, usuário administrador e sessão autenticada
-- `POST /api/auth/login` valida usuário, empresa ativa e status da assinatura antes de emitir o token
-- O token retorna `companyId`, `role` e `sub`, que são reutilizados nas rotas protegidas
-
-### RBAC
-
-O controle de acesso é explícito nos pontos de maior impacto operacional:
-
-| Ação | Perfis permitidos | Endpoint |
-| ---- | ----------------- | -------- |
-| Criar usuário | `ADMIN`, `GESTOR` | `POST /api/users` |
-| Atualizar plano da empresa | `ADMIN` | `PATCH /api/companies/current/plan` |
-| Operar chamados e dashboards do tenant | usuário autenticado da empresa | rotas protegidas por JWT |
-
-### Fluxo operacional do chamado
-
-1. O usuário abre o chamado com prioridade, categoria e setor.
-2. O sistema associa o chamado à empresa, calcula o SLA e grava os prazos de resposta e resolução.
-3. A fila operacional é organizada por técnico, com visão de sobrecarga e criticidade.
-4. O chamado segue por `ABERTO`, `EM_ANDAMENTO`, `PENDENTE`, até `CONCLUIDO` ou `CANCELADO`.
-5. Ao concluir, o sistema registra a resolução e recalcula o status de SLA como `OK`, `EM_RISCO` ou `VIOLADO`.
-6. Toda mudança relevante pode ser auditada para governança e compliance.
-
-## Prints do sistema
-
-### Cadastro de empresa (onboarding SaaS)
-
-![Cadastro da empresa](docs/prints/signup-empresa.svg)
-
-### Dashboard executivo
-
-![Dashboard executivo](docs/prints/dashboard-executivo.svg)
-
-### Assinatura e planos
-
-![Assinatura e planos](docs/prints/assinatura-planos.svg)
-
-## Solicitar demo
-
-Quer ver o fluxo completo em ambiente guiado? [Solicitar demo via GitHub Issues](https://github.com/fernando-msa/infrapulse/issues) e avalie como o InfraPulse organiza SLA, filas e governança operacional em um único painel.
-
-## Exemplo prático de uso
-
-### 1. Criar empresa + admin (onboarding)
-
-```bash
-curl -X POST http://localhost:3001/api/auth/signup-company \
-   -H "Content-Type: application/json" \
-   -d '{
-      "companyName": "Acme Support",
-      "adminName": "Maria Admin",
-      "adminEmail": "maria@acme.com",
-      "adminPassword": "SenhaForte123"
-   }'
-```
-
-Resposta esperada (resumo):
-
-```json
-{
-   "access_token": "<jwt>",
-   "user": {
-      "id": "...",
-      "email": "maria@acme.com",
-      "role": "ADMIN",
-      "companyId": "..."
-   }
-}
-```
-
-### 2. Consultar uso da empresa atual
-
-```bash
-curl -X GET http://localhost:3001/api/companies/current \
-   -H "Authorization: Bearer <jwt>"
-```
-
-### 3. Criar chamado (com validação de cota do plano)
-
-```bash
-curl -X POST http://localhost:3001/api/tickets \
-   -H "Authorization: Bearer <jwt>" \
-   -H "Content-Type: application/json" \
-   -d '{
-      "title": "Erro no checkout",
-      "description": "Pagamento retorna timeout",
-      "priority": "HIGH",
-      "status": "OPEN"
-   }'
-```
-
-## Fluxo SaaS
-
-1. Acesse `/signup` no frontend.
-2. Cadastre empresa e administrador.
-3. O sistema cria automaticamente:
-    - empresa em `TRIAL` (14 dias)
-    - usuário administrador
-    - sessão autenticada
-4. Acompanhe consumo e faça upgrade em `/assinatura`.
-
-### Planos disponíveis
-
-| Plano | Usuários ativos | Chamados/mês |
-| ----- | --------------- | ------------ |
-| `TRIAL` | 5 | 200 |
-| `STARTER` | 15 | 2.000 |
-| `GROWTH` | 50 | 10.000 |
-| `ENTERPRISE` | 500 | 100.000 |
-
-## Endpoints principais
-
-### Auth
-
-- `POST /api/auth/login`
-- `POST /api/auth/signup-company`
-
-### Companies
-
-- `GET /api/companies/current`
-- `PATCH /api/companies/current/plan` (somente `ADMIN`)
-
-### Tickets
-
-- `GET /api/tickets`
-- `GET /api/tickets/queue`
-- `GET /api/tickets/:id`
-- `POST /api/tickets`
-- `PUT /api/tickets/:id`
-- `POST /api/tickets/recalculate-sla`
-
-### Endpoints públicos (sem autenticação)
-
-- `GET /api/metrics/sla` - Métricas agregadas de SLA
-- `GET /api/teams/performance` - Performance de cada analista
-- `GET /api/incidents` - Incidentes críticos e em risco (query param: `limit`)
-
-### Regras de proteção ativas
-
-- Criação de usuário respeita limite de assentos do plano
-- Criação de chamado respeita cota mensal do plano
-- Login bloqueia empresa inativa, trial expirado e assinatura cancelada/inadimplente
-- Busca/atualização de chamados com isolamento por `companyId`
-
-## Stack
-
-| Camada | Tecnologia |
-| ------ | ---------- |
-| Frontend | Next.js 14 + TypeScript |
-| Estilo | Tailwind CSS + shadcn/ui |
-| Backend | NestJS |
-| Banco | Firebase Cloud Firestore |
-| ORM | Prisma |
-| Auth | JWT |
-| Infra | Vercel (frontend) + Cloud Run (backend) |
-
-> Observacao: o acesso ao Firestore no backend ja esta preparado via `firebase-admin`. Partes legadas do projeto ainda utilizam Prisma durante a transicao incremental.
-
-## Deploy alvo em cloud
-
-### Frontend (Vercel)
-
-- Deploy do projeto Next.js a partir da pasta `frontend`
-- Variavel obrigatoria: `NEXT_PUBLIC_API_URL` apontando para a URL publica do backend no Cloud Run
-
-### Backend (Cloud Run)
-
-- Container de producao com `npm run start:prod` e porta dinamica (`PORT`)
-- Endpoint de validacao de conectividade Firestore: `GET /api/infra/firestore/ping`
-- Acesso ao banco via `firebase-admin` com service account do runtime (ou credenciais por env)
-
-## Isolamento Multi-Tenant (Padrão SaaS)
-
-InfraPulse implementa **isolamento real de dados por empresa** em toda a plataforma:
-
-### 🔐 Garantias de Segurança
-
-- **companyId obrigatório**: Todos os queries ao banco incluem isolamento por `companyId`
-- **Middleware de isolamento**: Força isolamento em rotas protegidas
-- **JWT com companyId**: Cada token de usuário contém identificador da empresa
-- **Erro em tempo de compilação**: Qualquer query sem isolamento falha na compilação TypeScript
-
-### 📊 Exemplo Real
-
-```typescript
-// ❌ INSEGURO (não compila):
-const tickets = await prisma.ticket.findMany({
-  where: companyId ? { companyId } : {} // Retorna TUDO se undefined
-});
-
-// ✅ SEGURO (padrão InfraPulse):
-async findAll(filters: FilterTicketsDto, companyId: string) {
-  // companyId é OBRIGATÓRIO, não opcional
-  const where: any = { companyId }; // Sempre isolado
-  // ... resto da lógica
-}
-```
-
-### 🛡️ Serviços Protegidos
-
-Todos os serviços abaixo garantem isolamento:
-
-| Serviço | Endpoints | Isolamento |
-| ------- | --------- | ---------- |
-| Tickets | GET /api/tickets, POST, PUT | ✅ companyId obrigatório |
-| Dashboard | GET /api/dashboard/executive, operational | ✅ companyId obrigatório |
-| Usuários | GET /api/users, /users/technicians | ✅ companyId obrigatório |
-| Relatórios | GET /api/reports/tickets | ✅ companyId obrigatório |
-| Alertas | GET /api/alerts | ✅ companyId obrigatório |
-
-### 📌 Endpoints Públicos (Sem Isolamento)
-
-Alguns endpoints agregam dados de TODA a plataforma (sem isolamento):
-
-| Endpoint | Propósito | Dados |
-| -------- | --------- | ----- |
-| GET /api/metrics/sla | Métricas globais de SLA | Todas as empresas |
-| GET /api/teams/performance | Performance de todos analistas | Todas as empresas |
-| GET /api/incidents | Incidentes críticos globais | Todas as empresas |
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11-e0234e?logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore-ffca28?logo=firebase&logoColor=black)](https://firebase.google.com/)
 
 ---
 
-## Auditoria e Compliance (LGPD/ISO)
+## Overview
 
-InfraPulse implementa **rastreamento automático de ações** para conformidade regulatória:
+InfraPulse is a multi-tenant SaaS platform built for IT support teams that need to scale with predictability and governance. It provides real-time SLA monitoring, intelligent alerting, team performance tracking, and full audit trails -- all with per-company data isolation.
 
-### 🔍 O que é auditado
+The platform solves a common problem in IT operations: as teams grow, visibility into SLA compliance, technician workload, and resolution trends becomes fragmented. InfraPulse centralizes this operational data into actionable dashboards with role-based access for administrators, managers, and analysts.
 
-Todas as ações são registradas automaticamente:
+## Key Features
 
-| Ação | Entidade | Capturado |
-| ---- | -------- | --------- |
-| CREATE | Ticket, Usuário | Dados criados, quem criou, quando, IP |
-| UPDATE | Ticket, Usuário | Campos alterados (before/after), quem, quando, IP |
-| DELETE | Ticket, Usuário | Dados deletados, quem deletou, quando, IP |
-| LOGIN | Autenticação | Usuário, empresa, IP, User-Agent, horário |
-| LOGOUT | Autenticação | Usuário, empresa, IP, horário |
-| ASSIGN | Ticket | Técnico atribuído, quem atribuiu, quando |
-| CLOSE | Ticket | Quem fechou, quando, como |
+- **Multi-Tenant Architecture** -- Strict data isolation per company via JWT-embedded `companyId` enforced at the middleware layer
+- **Role-Based Access Control** -- Three roles (Admin, Manager, Analyst) with granular permissions on sensitive operations
+- **SLA Management** -- Configurable SLA rules per priority level with real-time status tracking (OK / At Risk / Violated)
+- **Executive & Operational Dashboards** -- KPIs, trend analysis, technician queue visualization, and risk indicators
+- **Intelligent Alerts** -- Automated detection of SLA breaches, overloaded teams, critical unassigned tickets, and queue bottlenecks
+- **Audit Trail** -- Complete change history with IP, user agent, and before/after diffs for LGPD and ISO 27001/9001 compliance
+- **CSV/Excel Import** -- Guided 3-step wizard for bulk ticket loading with column mapping
+- **Report Generation** -- Filtered reports with CSV export for operational analysis
+- **Subscription Management** -- Plan-based quotas (Trial, Starter, Growth, Enterprise) with seat and ticket limits
 
-### 📋 Campos de Auditoria (LGPD Compliance)
+## Architecture
 
-Cada log de auditoria registra:
-
-```json
-{
-  "id": "uuid",
-  "action": "CREATE | UPDATE | DELETE | LOGIN | LOGOUT | EXPORT | IMPORT | ASSIGN | REASSIGN | CLOSE | REOPEN",
-  "entity": "TICKET | USER | COMPANY | SLARULE | IMPORTBATCH | AUTH",
-  "entityId": "id-do-recurso",
-  "companyId": "isolamento-multi-tenant",
-  "userId": "quem-fez-a-acao",
-  "changes": {
-    "before": { "status": "ABERTO" },
-    "after": { "status": "CONCLUIDO" }
-  },
-  "description": "Ticket #123 atualizado",
-  "ipAddress": "192.168.1.100",
-  "userAgent": "Mozilla/5.0...",
-  "createdAt": "2026-04-19T22:35:41.179Z"
-}
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Next.js    │────>│    NestJS API     │────>│   Firestore /   │
+│   Frontend   │     │   (Cloud Run)     │     │   PostgreSQL    │
+│   (Vercel)   │<────│                  │<────│                 │
+└─────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-### 🔐 Garantias LGPD
+The backend implements a **dual data provider** pattern controlled by `DATA_PROVIDER`:
 
-- **Isolamento**: Cada empresa vê apenas seus próprios logs
-- **Direito ao esquecimento**: Logs antigos (>2 anos) podem ser deletados
-- **Rastreabilidade**: IP e User-Agent capturados para investigações
-- **Minimização**: Apenas dados necessários são registrados
+- **Firestore** (primary) -- Production path using `firebase-admin` SDK
+- **PostgreSQL + Prisma** (legacy) -- Local development path with seed data
 
-### 📊 Endpoints de Auditoria
+Every authenticated request passes through `TenantIsolationMiddleware`, which extracts `companyId` from the JWT and enforces it as a mandatory filter on all database queries.
 
-#### 1. Histórico de um Recurso
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 15, React 18, TypeScript, Tailwind CSS, shadcn/ui, Recharts |
+| **Backend** | NestJS 11, TypeScript, class-validator, Swagger |
+| **Auth** | JWT (Passport), bcryptjs, RBAC guards |
+| **Database** | Firebase Cloud Firestore / PostgreSQL (Prisma ORM) |
+| **Infrastructure** | Docker, GitHub Actions CI/CD |
+| **Deploy** | Vercel (frontend), Google Cloud Run (backend) |
+
+## API Reference
+
+| Resource | Endpoints | Auth |
+|----------|-----------|------|
+| **Auth** | `POST /login`, `POST /signup-company` | Public |
+| **Tickets** | CRUD, queue, SLA recalculation | JWT |
+| **Users** | List, create, technicians | JWT + RBAC |
+| **Dashboard** | Executive, operational | JWT |
+| **Alerts** | Detect, list, acknowledge, resolve | JWT |
+| **Audit** | History, company logs, compliance export | JWT |
+| **Reports** | Ticket reports, CSV export | JWT |
+| **Import** | Upload, process, batch history | JWT |
+| **Companies** | Current, plan management | JWT |
+| **Metrics** | SLA, teams, incidents | Rate-limited |
+
+Full interactive documentation available at `/api/docs` (development mode).
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- Docker & Docker Compose (for local PostgreSQL)
+- Firebase project with Firestore enabled (for production mode)
+
+### Quick Start
 
 ```bash
-curl -X GET http://localhost:3001/api/audit/TICKET/ticket-id-123 \
-   -H "Authorization: Bearer <jwt>"
-```
+# Clone the repository
+git clone https://github.com/fernando-msa/infrapulse.git
+cd infrapulse
 
-Resposta:
+# Start with Docker (PostgreSQL + Backend + Frontend)
+docker compose up
 
-```json
-[
-  {
-    "id": "audit-log-123",
-    "action": "UPDATE",
-    "entity": "TICKET",
-    "entityId": "ticket-id-123",
-    "description": "Ticket atualizado",
-    "changes": {
-      "priority": { "before": "ALTA", "after": "CRITICA" }
-    },
-    "user": {
-      "id": "user-123",
-      "name": "Maria Admin",
-      "email": "maria@infrapulse.com"
-    },
-    "createdAt": "2026-04-19T22:35:41.179Z"
-  }
-]
-```
-
-#### 2. Auditoria Completa da Empresa
-
-```bash
-# Últimos 100 logs
-curl -X GET http://localhost:3001/api/audit/company/logs \
-   -H "Authorization: Bearer <jwt>"
-
-# Filtrar por ação
-curl -X GET "http://localhost:3001/api/audit/company/logs?action=UPDATE&entity=TICKET" \
-   -H "Authorization: Bearer <jwt>"
-
-# Últimos 7 dias
-curl -X GET "http://localhost:3001/api/audit/company/logs?days=7" \
-   -H "Authorization: Bearer <jwt>"
-```
-
-#### 3. Exportar para Conformidade
-
-```bash
-curl -X GET "http://localhost:3001/api/audit/export/compliance?startDate=2026-01-01&endDate=2026-04-19" \
-   -H "Authorization: Bearer <jwt>"
-```
-
-Retorna JSON com todos os logs do período para auditorias internas e externas.
-
-### 🛡️ Integração com ISO 27001/9001
-
-A auditoria suporta requisitos de governança:
-
-| Requisito ISO | Suporte | Como |
-| ------------- | ------- | ---- |
-| A.12.4.1 - Event logging | ✅ | Todos os eventos capturados em `AuditLog` |
-| A.12.4.3 - Protection of audit info | ✅ | Isolamento por companyId + apenas ADMIN acessa |
-| A.13.1.3 - Segregation of duties | ✅ | Roles (ADMIN, GESTOR, ANALISTA) com permissões |
-| A.14.2.1 - Change management | ✅ | Rastreamento before/after de mudanças |
-| A.14.2.5 - Access restrictions | ✅ | Middleware obriga autenticação + isolamento |
-
----
-
-## Alertas Inteligentes
-
-InfraPulse monitora proativamente a operação e gera alertas contextualizados para:
-
-### 🚨 Tipos de Alertas
-
-| Alerta | Severidade | Ação |
-| ------ | ---------- | ---- |
-| **SLA em Risco** | ⚠️ AVISO / 🔴 CRÍTICO | Ticket com 70%+ do SLA consumido |
-| **SLA Violado** | 🔴 CRÍTICO | Ticket ultrapassou deadline |
-| **Equipe Sobrecarregada** | ⚠️ AVISO / 🔴 CRÍTICO | Técnico com >10 tickets abertos |
-| **Ticket Crítico Não Atribuído** | 🔴 CRÍTICO | Prioridade CRITICA sem responsável |
-| **Fila Crítica** | 🔴 CRÍTICO / 🛑 BLOQUEADOR | >20 tickets aguardando atendimento |
-
-### 🎯 Severidade
-
-```
-INFO       - Informativo (não requer ação)
-AVISO      - Requer atenção (70-80% SLA consumido)
-CRITICO    - Ação necessária (80%+ SLA ou equipe overload)
-BLOQUEADOR - Operação comprometida (SLA violado ou fila >30)
-```
-
-### 📊 Endpoints de Alertas
-
-#### 1. Detectar Alertas em Tempo Real
-
-```bash
-curl -X GET http://localhost:3001/api/alerts/detect \
-  -H "Authorization: Bearer <jwt>"
-```
-
-#### 2. Dashboard de Alertas
-
-```bash
-curl -X GET http://localhost:3001/api/alerts/dashboard \
-  -H "Authorization: Bearer <jwt>"
-```
-
-#### 3. Reconhecer Alerta
-
-```bash
-curl -X PUT "http://localhost:3001/api/alerts/alert-123/acknowledge" \
-  -H "Authorization: Bearer <jwt>"
-```
-
-#### 4. Resolver Alerta
-
-```bash
-curl -X PUT "http://localhost:3001/api/alerts/alert-123/resolve" \
-  -H "Authorization: Bearer <jwt>"
-```
-
-### 🧹 Limpeza de Dados (LGPD)
-
-Para cumprir o direito ao esquecimento (LGPD Art. 17), execute:
-
-```bash
-# Via script
-curl -X POST http://localhost:3001/api/audit/cleanup \
-   -H "Authorization: Bearer <admin-jwt>" \
-   -H "Content-Type: application/json" \
-   -d '{"daysOld": 730}'  # Delete logs com >2 anos
-```
-
----
-
-## Estrutura do monorepo
-
-```text
-infrapulse/
-├── frontend/        # App Next.js
-├── backend/         # API NestJS
-├── docs/prints/     # Prints e imagens do README
-├── docker-compose.yml
-└── README.md
-```
-
-## Pré-requisitos
-
-- Node.js 18+
-- Conta Vercel (frontend)
-- Projeto no Google Cloud com Cloud Run e Firestore habilitados
-- Google Cloud SDK (`gcloud`) para deploy do backend
-- npm ou yarn
-
-## Deploy recomendado (Vercel + Cloud Run)
-
-### 1. Frontend na Vercel
-
-- Root Directory: `frontend`
-- Build Command: `npm run build`
-- Install Command: `npm install`
-- Variavel obrigatoria:
-
-```env
-NEXT_PUBLIC_API_URL=https://SEU_BACKEND_CLOUD_RUN.run.app
-```
-
-### 2. Backend no Cloud Run
-
-No backend, configure as variaveis de ambiente e execute o deploy:
-
-```bash
+# Or run locally:
+# Backend
 cd backend
-gcloud run deploy infrapulse-backend \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-Depois do deploy, valide:
-
-- Health Firestore: `GET /api/infra/firestore/ping`
-- Swagger: `https://SEU_BACKEND_CLOUD_RUN.run.app/api/docs`
-
-## Rodando localmente (modo legado)
-
-Se quiser validar os fluxos antigos baseados em Prisma/PostgreSQL localmente, use o setup abaixo.
-
-## Rodando localmente (sem Docker)
-
-### Backend (local)
-
-```bash
-cd backend
-cp .env.example .env
+cp .env.example .env    # Configure your environment variables
 npm install
-npm.cmd exec prisma db push
-npm.cmd exec prisma generate
-npm.cmd exec prisma db seed
+npx prisma migrate dev  # Set up PostgreSQL schema
+npx prisma db seed      # Load 1200+ demo tickets
 npm run start:dev
-```
 
-### Frontend (local)
-
-```bash
+# Frontend
 cd frontend
 cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-## Usuários do seed
+The application will be available at:
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:3001`
+- Swagger Docs: `http://localhost:3001/api/docs`
 
-| Email | Senha | Perfil |
-| ----- | ----- | ------ |
-| `admin@infrapulse.com` | admin123 | Admin |
-| `gestor@infrapulse.com` | gestor123 | Gestor |
-| `analista@infrapulse.com` | analista123 | Analista |
-| `joao@infrapulse.com` | analista123 | Analista |
-| `maria@infrapulse.com` | analista123 | Analista |
-| `pedro@infrapulse.com` | analista123 | Analista |
-| `juliana@infrapulse.com` | analista123 | Analista |
-| `bruno@infrapulse.com` | analista123 | Analista |
+### Environment Variables
 
-## Testando a seed de demonstração (1200+ chamados)
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `JWT_SECRET` | Yes | Secret key for JWT signing (use `openssl rand -hex 32`) |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `DATA_PROVIDER` | No | `firebase` for Firestore, omit for PostgreSQL |
+| `CORS_ORIGIN` | No | Allowed CORS origin (default: `http://localhost:3000`) |
+| `FIREBASE_PROJECT_ID` | If using Firebase | GCP project ID |
+| `FIREBASE_CLIENT_EMAIL` | If using Firebase | Service account email |
+| `FIREBASE_PRIVATE_KEY` | If using Firebase | Service account private key |
 
-Esta seed foi desenhada para demo executiva e gera automaticamente:
+## Security
 
-- 1200 chamados com status variados (`ABERTO`, `EM_ANDAMENTO`, `PENDENTE`, `CONCLUIDO`, `CANCELADO`)
-- SLA misto (`OK`, `EM_RISCO`, `VIOLADO`)
-- distribuição entre múltiplos analistas
-- categorias e setores realistas para cenário hospitalar/operações
+InfraPulse implements defense-in-depth security:
 
-No ambiente de demo, a seed será carregada para entregar uma experiência de validação mais realista e guiada, com dados operacionais prontos para que qualquer testador consiga explorar, medir e validar rapidamente os fluxos de SLA, fila e resolução.
+- **Authentication**: JWT with bcrypt-hashed passwords (cost factor 10)
+- **Authorization**: Role-based guards on sensitive endpoints (user creation, plan management)
+- **Tenant Isolation**: Global middleware enforcing `companyId` on every authenticated query
+- **Input Validation**: `class-validator` with `whitelist: true` and `forbidNonWhitelisted: true`
+- **Rate Limiting**: Global rate limits with stricter thresholds on auth endpoints
+- **Security Headers**: Helmet middleware for HSTS, CSP, X-Frame-Options, and more
+- **Audit Logging**: Automatic capture of create/update/delete operations with IP and user agent
+- **CORS**: Configurable origin restriction (not wildcard)
 
-### Passo a passo rápido (Windows + Docker)
-
-1. Suba apenas o banco PostgreSQL:
-
-```bash
-docker compose up -d postgres
-```
-
-1. Valide se o host local responde em `localhost:5432`:
-
-```powershell
-Test-NetConnection -ComputerName localhost -Port 5432
-```
-
-1. Prepare e aplique o schema no banco:
+## Testing
 
 ```bash
-cd backend
-npm.cmd install
-npm.cmd exec prisma db push
-npm.cmd exec prisma generate
+# Backend unit tests
+cd backend && npm test
+
+# Frontend unit tests
+cd frontend && npm test
+
+# Backend with coverage
+cd backend && npm run test:cov
 ```
 
-1. Execute a seed:
+## Deployment
 
-```bash
-npm.cmd exec prisma db seed
-```
+| Component | Platform | Trigger |
+|-----------|----------|---------|
+| Frontend | Vercel | Push to `main` |
+| Backend | Google Cloud Run | Docker image build |
+| CI/CD | GitHub Actions | Push / PR to `main` |
 
-1. Resultado esperado no terminal:
+The CI pipeline runs lint, tests, and build for both frontend and backend on every push.
 
-```text
-Seed concluido com sucesso!
-Chamados gerados: 1200
-```
+## License
 
-### Observações
-
-- A seed recria os chamados da empresa demo (`infrapulse-demo`) a cada execução, evitando duplicação infinita.
-- Se preferir ambiente 100% local sem Docker, garanta que o PostgreSQL esteja rodando em `localhost:5432` antes de rodar o seed.
-- Em ambientes sem bloqueio de política do PowerShell, `npx prisma ...` também funciona.
-
-## API Pública (sem autenticação)
-
-A InfraPulse expõe três endpoints públicos para monitoramento em tempo real da plataforma:
-
-### GET /api/metrics/sla
-
-Retorna métricas agregadas de SLA de **toda a plataforma**.
-
-```bash
-curl -X GET http://localhost:3001/api/metrics/sla
-```
-
-Resposta exemplo:
-
-```json
-{
-  "total": 1200,
-  "ok": 952,
-  "emRisco": 152,
-  "violado": 96,
-  "percentualOk": 79,
-  "percentualRisco": 13,
-  "percentualViolado": 8,
-  "tempoMedioAtendimento": 13.6,
-  "timestamp": "2026-04-19T22:35:41.179Z"
-}
-```
-
-### GET /api/teams/performance
-
-Retorna performance de **cada analista** com tickets atribuídos.
-
-```bash
-curl -X GET http://localhost:3001/api/teams/performance
-```
-
-Resposta exemplo:
-
-```json
-{
-  "teams": [
-    {
-      "id": "3d87c146-953c-423e-8608-db837a008ac5",
-      "name": "Ana Martins",
-      "email": "analista@infrapulse.com",
-      "totalTickets": 333,
-      "concluidos": 84,
-      "emAberto": 249,
-      "slaOk": 286,
-      "emRisco": 29,
-      "violado": 18,
-      "taxaSlaCompliance": 86,
-      "tempoMedioResolucao": 11.3,
-      "ticketsCriticos": 63
-    }
-  ],
-  "timestamp": "2026-04-19T22:35:41.179Z"
-}
-```
-
-### GET /api/incidents
-
-Retorna **incidentes críticos** (prioridade CRÍTICA) e **em risco de SLA** (status EM_RISCO ou VIOLADO).
-
-**Query parameters:**
-- `limit` (opcional, padrão 50): número máximo de incidentes
-
-```bash
-curl -X GET "http://localhost:3001/api/incidents?limit=10"
-```
-
-Resposta exemplo:
-
-```json
-{
-  "total": 424,
-  "incidents": [
-    {
-      "id": "a3f0d1f9-5822-4579-afe3-a49f32207a69",
-      "title": "Servidor de arquivos com pouco espaco #0699",
-      "description": "Volume de rede atingiu nivel critico e a operacao precisa de limpeza imediata.",
-      "status": "ABERTO",
-      "priority": "CRITICA",
-      "slaStatus": "OK",
-      "daysOpen": 0,
-      "company": "InfraPulse Demo",
-      "assignedTo": "Pedro Costa",
-      "openedAt": "2026-04-19T21:58:07.288Z",
-      "resolvedAt": null
-    }
-  ],
-  "timestamp": "2026-04-19T22:35:41.179Z"
-}
-```
-
-## Variáveis de ambiente
-
-### Backend (`backend/.env.example`)
-
-```env
-DATABASE_URL=postgresql://infrapulse:infrapulse@localhost:5432/infrapulse
-DATA_PROVIDER=firebase
-JWT_SECRET=sua_chave_jwt_super_secreta
-JWT_EXPIRES_IN=7d
-PORT=3001
-FIREBASE_PROJECT_ID=seu_projeto_firebase
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxx@seu_projeto.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\\nSUA_CHAVE\\n-----END PRIVATE KEY-----\\n"
-```
-
-No Cloud Run, quando a service account da aplicacao tiver permissao no Firestore,
-`FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` podem ser omitidas (o `firebase-admin`
-usa as credenciais padrao do runtime).
-
-### Frontend (`frontend/.env.example`)
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3001
-```
-
-## Testes e cobertura
-
-### Backend (testes)
-
-```bash
-cd backend
-npm.cmd install
-npm.cmd test -- --runInBand
-npm.cmd run test:cov
-```
-
-### Frontend (testes)
-
-```bash
-cd frontend
-npm.cmd install
-npm.cmd run test:run
-npm.cmd run test:coverage
-```
-
-- Relatório de cobertura backend: `backend/coverage/`
-- Relatório de cobertura frontend: `frontend/coverage/`
-
-## Licença
-
-MIT
+MIT -- see [LICENSE](LICENSE) for details.

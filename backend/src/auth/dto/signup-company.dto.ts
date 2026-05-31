@@ -21,6 +21,6 @@ export class SignupCompanyDto {
 
   @ApiProperty()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   adminPassword: string;
 }

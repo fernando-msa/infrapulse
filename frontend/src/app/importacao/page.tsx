@@ -66,7 +66,7 @@ export default function ImportacaoPage() {
     if (!fileData) return;
     setProcessing(true);
     try {
-      const res = await importApi.process(fileData.path, fileData.filename, mapping);
+      const res = await importApi.process(fileData.uploadId, mapping);
       setResult(res.data);
       setStep('result');
       importApi.batches().then(r => setBatches(r.data));

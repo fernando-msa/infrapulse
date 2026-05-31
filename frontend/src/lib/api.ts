@@ -68,8 +68,8 @@ export const importApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  process: (filePath: string, filename: string, mapping: Record<string, string>) =>
-    api.post('/import/process', { filePath, filename, mapping }),
+  process: (uploadId: string, mapping: Record<string, string>) =>
+    api.post('/import/process', { uploadId, mapping }),
   batches: () => api.get('/import/batches'),
 };
 

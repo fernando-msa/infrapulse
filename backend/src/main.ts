@@ -1,13 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(helmet());
+
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
   app.enableCors({
-    origin: '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
@@ -22,20 +26,21 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const config = new DocumentBuilder()
-    .setTitle('InfraPulse API')
-    .setDescription('API da plataforma InfraPulse')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('InfraPulse API')
+      .setDescription('API da plataforma InfraPulse')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`🚀 InfraPulse API rodando em http://localhost:${port}`);
-  console.log(`📚 Swagger: http://localhost:${port}/api/docs`);
+  console.log(`InfraPulse API running on http://localhost:${port}`);
 }
 
 bootstrap();

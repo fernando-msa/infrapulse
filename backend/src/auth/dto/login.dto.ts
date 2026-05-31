@@ -8,6 +8,6 @@ export class LoginDto {
 
   @ApiProperty({ example: 'admin123' })
   @IsString()
-  @MinLength(6, { message: 'Senha deve ter pelo menos 6 caracteres' })
+  @MinLength(8, { message: 'Senha deve ter pelo menos 8 caracteres' })
   password: string;
 }
